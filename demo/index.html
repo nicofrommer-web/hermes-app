@@ -1,0 +1,641 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#0a0a0a" />
+  <meta name="description" content="HERMES — KI-Assistent für Betriebe in Villingen-Schwenningen. Keine Anfrage mehr verpassen." />
+  <title>HERMES — Keine Anfrage mehr verpassen.</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Syne:wght@700;800&display=swap" rel="stylesheet" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23f5a623'/%3E%3Ctext x='16' y='23' text-anchor='middle' font-family='Syne,sans-serif' font-weight='800' font-size='18' fill='%230a0a0a'%3EH%3C/text%3E%3C/svg%3E" />
+  <style>
+    :root {
+      --bg: #0a0a0a;
+      --card: #151515;
+      --accent: #f5a623;
+      --accent-soft: rgba(245, 166, 35, 0.14);
+      --accent-line: rgba(245, 166, 35, 0.28);
+      --text: #ffffff;
+      --muted: #9c9c9c;
+      --muted-2: #6e6e6e;
+      --online: #7ddb8a;
+      --border: #242424;
+      --radius: 18px;
+      --shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    html, body { background: var(--bg); color: var(--text); }
+    body {
+      font-family: "Manrope", system-ui, sans-serif;
+      font-size: 16px;
+      line-height: 1.5;
+      min-height: 100dvh;
+      -webkit-font-smoothing: antialiased;
+      text-rendering: optimizeLegibility;
+    }
+
+    .grain {
+      pointer-events: none;
+      position: fixed;
+      inset: 0;
+      z-index: 50;
+      opacity: 0.045;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23n)'/%3E%3C/svg%3E");
+    }
+
+    .wrap {
+      width: min(720px, calc(100% - 32px));
+      margin: 0 auto;
+    }
+
+    header.app-header {
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      background: rgba(10, 10, 10, 0.86);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--border);
+    }
+    header.app-header::before {
+      content: "";
+      display: block;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, var(--accent) 20%, #ffd27a 50%, var(--accent) 80%, transparent);
+    }
+    .header-inner { padding: 16px 0 16px; }
+    .brand-row {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-width: 0;
+    }
+    .logo-mark {
+      flex-shrink: 0;
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      background: var(--accent);
+      color: #0a0a0a;
+      font-family: "Syne", sans-serif;
+      font-weight: 800;
+      font-size: 22px;
+      display: grid;
+      place-items: center;
+      letter-spacing: -0.04em;
+      box-shadow: 0 0 0 1px rgba(245, 166, 35, 0.4), 0 8px 24px rgba(245, 166, 35, 0.22);
+    }
+    .brand h1 {
+      font-family: "Syne", sans-serif;
+      font-weight: 800;
+      font-size: 1.35rem;
+      letter-spacing: 0.16em;
+      line-height: 1;
+    }
+    .slogan {
+      margin-top: 4px;
+      color: var(--muted);
+      font-size: 0.82rem;
+      font-weight: 500;
+    }
+    .subtitle {
+      color: var(--muted-2);
+      font-size: 0.78rem;
+      font-weight: 500;
+      max-width: 16rem;
+      text-align: right;
+      line-height: 1.35;
+    }
+
+    main { padding: 22px 0 80px; }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 18px 18px 16px;
+      box-shadow: var(--shadow);
+    }
+    .card h2 {
+      font-size: 0.72rem;
+      font-weight: 800;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 14px;
+    }
+
+    .demo-intro {
+      text-align: center;
+      margin-bottom: 16px;
+    }
+    .demo-intro p {
+      color: var(--muted);
+      font-size: 0.92rem;
+    }
+
+    .tabs {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 8px;
+      margin-bottom: 14px;
+    }
+    .tabs button {
+      appearance: none;
+      border: 1px solid var(--border);
+      background: var(--card);
+      color: var(--muted);
+      font-family: inherit;
+      font-weight: 800;
+      font-size: 0.85rem;
+      padding: 11px 8px;
+      border-radius: 12px;
+      cursor: pointer;
+    }
+    .tabs button[aria-selected="true"] {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #0a0a0a;
+    }
+    .tabs button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+    .phone {
+      background: #0e0e0e;
+      border: 1px solid #2a2a2a;
+      border-radius: 24px;
+      overflow: hidden;
+      box-shadow: 0 20px 50px rgba(0,0,0,.45);
+      margin-bottom: 14px;
+    }
+    .chat-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 14px 16px;
+      background: #121212;
+      border-bottom: 1px solid #242424;
+    }
+    .avatar {
+      width: 42px; height: 42px;
+      border-radius: 50%;
+      background: var(--accent);
+      color: #0a0a0a;
+      font-family: "Syne", sans-serif;
+      font-weight: 800;
+      display: grid; place-items: center;
+      font-size: 1rem;
+    }
+    .chat-title { font-weight: 800; font-size: 0.98rem; }
+    .status {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      color: var(--online);
+      font-size: 0.75rem;
+      font-weight: 600;
+      margin-top: 1px;
+    }
+    .dot {
+      width: 8px; height: 8px;
+      background: var(--online);
+      border-radius: 50%;
+      box-shadow: 0 0 0 4px rgba(125, 219, 138, 0.18);
+    }
+    .chat-body {
+      min-height: 320px;
+      padding: 16px 14px 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      background:
+        radial-gradient(1200px 200px at 50% -40px, rgba(245,166,35,0.06), transparent 50%),
+        #0c0c0c;
+    }
+    .bubble {
+      max-width: 86%;
+      padding: 10px 12px;
+      border-radius: 16px;
+      font-size: 0.92rem;
+      line-height: 1.45;
+      animation: pop .28s ease;
+      word-wrap: break-word;
+    }
+    .bubble.in {
+      align-self: flex-start;
+      background: #1c1c1c;
+      border: 1px solid #2a2a2a;
+      border-bottom-left-radius: 5px;
+      color: #f3f3f3;
+    }
+    .bubble.out {
+      align-self: flex-end;
+      background: linear-gradient(180deg, #ffb03a, var(--accent));
+      color: #1a1000;
+      font-weight: 600;
+      border-bottom-right-radius: 5px;
+    }
+    .who-label {
+      font-size: 0.68rem;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      margin-bottom: 3px;
+      opacity: 0.7;
+    }
+    .bubble.out .who-label { color: #5a3a00; opacity: 1; }
+    .bubble.in .who-label { color: var(--accent); opacity: 1; }
+
+    .typing {
+      align-self: flex-end;
+      display: inline-flex;
+      gap: 5px;
+      padding: 12px 14px;
+      background: #2a2114;
+      border-radius: 16px 16px 5px 16px;
+    }
+    .typing i {
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      background: var(--accent);
+      animation: bounce 1s infinite;
+    }
+    .typing i:nth-child(2) { animation-delay: .15s; }
+    .typing i:nth-child(3) { animation-delay: .3s; }
+
+    @keyframes bounce {
+      0%, 60%, 100% { transform: translateY(0); opacity: .4; }
+      30% { transform: translateY(-4px); opacity: 1; }
+    }
+    @keyframes pop {
+      from { opacity: 0; transform: translateY(8px) scale(.98); }
+      to { opacity: 1; transform: none; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .bubble, .typing i { animation: none; transition: none; }
+    }
+
+    .how { display: grid; gap: 10px; }
+    .how-step {
+      display: grid;
+      grid-template-columns: 36px 1fr;
+      gap: 12px;
+      align-items: center;
+      padding: 10px 4px;
+    }
+    .how-step .n {
+      width: 36px; height: 36px;
+      border-radius: 10px;
+      background: var(--accent);
+      color: #0a0a0a;
+      font-family: "Syne", sans-serif;
+      font-weight: 800;
+      display: grid; place-items: center;
+    }
+    .how-step p { font-size: 0.95rem; font-weight: 600; }
+
+    .banner {
+      margin-top: 12px;
+      padding: 20px 18px;
+      border-radius: var(--radius);
+      border: 1px solid var(--accent-line);
+      background:
+        radial-gradient(500px 120px at 80% 0%, rgba(245,166,35,0.16), transparent 60%),
+        var(--card);
+      text-align: center;
+    }
+    .banner h3 {
+      font-family: "Manrope", system-ui, sans-serif;
+      font-size: 1.12rem;
+      font-weight: 800;
+      letter-spacing: -0.01em;
+      line-height: 1.35;
+    }
+    .banner .sub { color: var(--muted); margin: 6px 0 16px; font-size: 0.88rem; }
+    .cta {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      width: 100%;
+      max-width: 420px;
+      border: 0;
+      background: var(--accent);
+      color: #0a0a0a;
+      font-weight: 800;
+      font-size: 0.95rem;
+      padding: 14px 16px;
+      border-radius: 14px;
+      box-shadow: 0 10px 24px rgba(245, 166, 35, 0.25);
+      text-decoration: none;
+      font-family: inherit;
+      cursor: pointer;
+    }
+    .cta:hover { filter: brightness(1.05); }
+    .cta:focus-visible { outline: 2px solid #fff; outline-offset: 3px; }
+
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      z-index: 40;
+      background: rgba(0,0,0,.64);
+      display: grid;
+      place-items: end center;
+      padding: 16px;
+    }
+    .modal-backdrop[hidden] { display: none !important; }
+    .modal {
+      width: min(440px, 100%);
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 22px 20px 18px;
+      box-shadow: 0 24px 60px rgba(0,0,0,.5);
+      animation: pop .25s ease;
+    }
+    .modal h3 {
+      font-family: "Syne", sans-serif;
+      font-size: 1.2rem;
+      margin-bottom: 8px;
+    }
+    .modal p { color: var(--muted); font-size: 0.95rem; margin-bottom: 16px; }
+    .modal-actions { display: grid; gap: 8px; }
+    .modal a, .modal .disabled-link {
+      display: block;
+      text-align: center;
+      text-decoration: none;
+      font-weight: 800;
+      padding: 12px;
+      border-radius: 12px;
+    }
+    .modal a.wa, .modal .disabled-link.wa { background: #1f3d28; color: var(--online); border: 1px solid #2e5a3c; }
+    .modal a.ig, .modal .disabled-link.ig { background: #2a2114; color: var(--accent); border: 1px solid var(--accent-line); }
+    .modal .disabled-link { opacity: .55; cursor: default; }
+    .modal .close {
+      margin-top: 10px;
+      width: 100%;
+      border: 0;
+      background: #222;
+      color: #fff;
+      font-family: inherit;
+      font-weight: 700;
+      padding: 11px;
+      border-radius: 12px;
+      cursor: pointer;
+    }
+
+    footer.note {
+      text-align: center;
+      color: var(--muted-2);
+      font-size: 0.75rem;
+      margin-top: 28px;
+    }
+
+    @media (min-width: 780px) {
+      .wrap { width: min(720px, calc(100% - 48px)); }
+      .header-inner { padding: 18px 0 18px; }
+      .brand h1 { font-size: 1.55rem; }
+      .chat-body { min-height: 360px; padding: 18px 18px 22px; }
+      .bubble { max-width: 74%; font-size: 0.98rem; }
+      .modal-backdrop { place-items: center; }
+      .cta { width: auto; padding: 14px 28px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="grain" aria-hidden="true"></div>
+  <header class="app-header">
+    <div class="wrap header-inner">
+      <div class="brand-row">
+        <div class="brand">
+          <div class="logo-mark" aria-hidden="true">H</div>
+          <div>
+            <h1>HERMES</h1>
+            <p class="slogan">Keine Anfrage mehr verpassen.</p>
+          </div>
+        </div>
+        <p class="subtitle">KI-Assistent für Betriebe in Villingen-Schwenningen</p>
+      </div>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <div class="demo-intro">
+      <p>So antwortet Hermes — in 30 Sekunden, mit Preis und freiem Termin.</p>
+    </div>
+    <div class="tabs" role="tablist" aria-label="Branchen">
+      <button type="button" role="tab" id="tab-barber" aria-selected="true" data-tab="barber">Barber</button>
+      <button type="button" role="tab" id="tab-kosmetik" aria-selected="false" data-tab="kosmetik">Kosmetik</button>
+      <button type="button" role="tab" id="tab-elektro" aria-selected="false" data-tab="elektro">Elektro</button>
+    </div>
+
+    <div class="phone">
+      <div class="chat-header">
+        <div class="avatar">H</div>
+        <div>
+          <div class="chat-title" id="chat-title">Hermes · Barber</div>
+          <div class="status"><span class="dot" aria-hidden="true"></span><span>online · antwortet sofort</span></div>
+        </div>
+      </div>
+      <div class="chat-body" id="chat-body" aria-live="polite"></div>
+    </div>
+
+    <article class="card">
+      <h2>So funktioniert Hermes</h2>
+      <div class="how">
+        <div class="how-step"><span class="n">1</span><p>Kunde schreibt per WhatsApp / Instagram DM</p></div>
+        <div class="how-step"><span class="n">2</span><p>Hermes antwortet in 30 Sekunden</p></div>
+        <div class="how-step"><span class="n">3</span><p>Termin direkt gebucht</p></div>
+      </div>
+    </article>
+
+    <div class="banner">
+      <h3>30 Tage testen - Pilot 345 € statt 690 €</h3>
+      <p class="sub">danach 149 € / Monat, jederzeit kündbar</p>
+      <button type="button" class="cta" id="cta-start">Jetzt Pilot starten - per WhatsApp / Instagram DM</button>
+    </div>
+
+    <footer class="note">Hermes Team aus Schwenningen</footer>
+  </main>
+
+  <div class="modal-backdrop" id="cta-modal" hidden>
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="cta-modal-title">
+      <h3 id="cta-modal-title">Pilot starten</h3>
+      <p id="cta-modal-text">Schreib uns per WhatsApp oder Instagram DM – Hermes Team aus Schwenningen</p>
+      <div class="modal-actions" id="cta-modal-actions"></div>
+      <button type="button" class="close" id="cta-close">Schließen</button>
+    </div>
+  </div>
+
+  <script>
+    /* ============================================================
+       CONFIG — hier WhatsApp-Nummer und Instagram-Handle eintragen.
+       Wenn gesetzt, führt der Button zu wa.me bzw. Instagram.
+       Nummer ohne + und Leerzeichen, z. B. "491701234567"
+       Handle ohne @, z. B. "hermes.vs"
+       ============================================================ */
+    const CONFIG = {
+      whatsappNumber: "",
+      instagramHandle: ""
+    };
+
+    const CHATS = {
+      barber: {
+        title: "Hermes · Barber",
+        messages: [
+          { from: "in", who: "Kunde", text: "Was kostet Fade + Bart? Habt ihr heute noch frei?" },
+          { from: "out", who: "Hermes", text: "Fade + Bart 35 Euro. Heute frei: 15:30, 17:00, 18:45 - soll ich 15:30 buchen?" },
+          { from: "in", who: "Kunde", text: "Ja" },
+          { from: "out", who: "Hermes", text: "Bestätigt! Termin 15:30 gebucht." }
+        ]
+      },
+      kosmetik: {
+        title: "Hermes · Kosmetik",
+        messages: [
+          { from: "in", who: "Kundin", text: "Was kostet PMU Lippen? Habt ihr Samstag frei?" },
+          { from: "out", who: "Hermes", text: "PMU Lippen ab 249 € inkl. Nachbehandlung. Samstag frei: 10:00, 14:30, 16:00 - soll ich 14:30 buchen?" },
+          { from: "in", who: "Kundin", text: "14:30 bitte" },
+          { from: "out", who: "Hermes", text: "Bestätigt! PMU Lippen Samstag 14:30 gebucht + Erinnerung automatisch." }
+        ]
+      },
+      elektro: {
+        title: "Hermes · Elektro",
+        messages: [
+          { from: "in", who: "Kunde", text: "Was kostet Wallbox?" },
+          { from: "out", who: "Hermes", text: "Wallbox ab 1200 € inkl. Installation & Beratung. Wann passt Besichtigung?" },
+          { from: "in", who: "Kunde", text: "Morgen" },
+          { from: "out", who: "Hermes", text: "Termin gesichert! Details per DM." }
+        ]
+      }
+    };
+
+    let activeTab = "barber";
+    let chatToken = 0;
+
+    function reducedMotion() {
+      return window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    }
+
+    function playChat(tab) {
+      activeTab = tab;
+      const data = CHATS[tab];
+      document.getElementById("chat-title").textContent = data.title;
+      document.querySelectorAll(".tabs [role=tab]").forEach((btn) => {
+        btn.setAttribute("aria-selected", String(btn.dataset.tab === tab));
+      });
+      const body = document.getElementById("chat-body");
+      body.innerHTML = "";
+      const token = ++chatToken;
+      const msgs = data.messages;
+      if (reducedMotion()) {
+        msgs.forEach((m) => body.appendChild(bubbleEl(m)));
+        return;
+      }
+      (async () => {
+        for (const m of msgs) {
+          if (token !== chatToken) return;
+          if (m.from === "out") {
+            const typing = document.createElement("div");
+            typing.className = "typing";
+            typing.setAttribute("aria-label", "Hermes schreibt");
+            typing.innerHTML = "<i></i><i></i><i></i>";
+            body.appendChild(typing);
+            body.scrollTop = body.scrollHeight;
+            await wait(720);
+            if (token !== chatToken) return;
+            typing.remove();
+          } else {
+            await wait(280);
+            if (token !== chatToken) return;
+          }
+          body.appendChild(bubbleEl(m));
+          body.scrollTop = body.scrollHeight;
+          await wait(420);
+        }
+      })();
+    }
+
+    function bubbleEl(m) {
+      const el = document.createElement("div");
+      el.className = "bubble " + m.from;
+      const who = document.createElement("div");
+      who.className = "who-label";
+      who.textContent = m.who;
+      const t = document.createElement("div");
+      t.textContent = m.text;
+      el.append(who, t);
+      return el;
+    }
+
+    function wait(ms) { return new Promise((r) => setTimeout(r, ms)); }
+
+    function openCta() {
+      const wa = (CONFIG.whatsappNumber || "").trim();
+      const ig = (CONFIG.instagramHandle || "").trim().replace(/^@/, "");
+      const actions = document.getElementById("cta-modal-actions");
+      actions.innerHTML = "";
+
+      if (wa) {
+        const a = document.createElement("a");
+        a.className = "wa";
+        a.href = "https://wa.me/" + wa.replace(/\D/g, "");
+        a.target = "_blank";
+        a.rel = "noopener noreferrer";
+        a.textContent = "Per WhatsApp schreiben";
+        actions.appendChild(a);
+      } else {
+        const d = document.createElement("div");
+        d.className = "disabled-link wa";
+        d.textContent = "WhatsApp (Nummer in CONFIG eintragen)";
+        actions.appendChild(d);
+      }
+
+      if (ig) {
+        const a = document.createElement("a");
+        a.className = "ig";
+        a.href = "https://instagram.com/" + encodeURIComponent(ig);
+        a.target = "_blank";
+        a.rel = "noopener noreferrer";
+        a.textContent = "Per Instagram DM schreiben";
+        actions.appendChild(a);
+      } else {
+        const d = document.createElement("div");
+        d.className = "disabled-link ig";
+        d.textContent = "Instagram (Handle in CONFIG eintragen)";
+        actions.appendChild(d);
+      }
+
+      document.getElementById("cta-modal").hidden = false;
+      document.getElementById("cta-close").focus();
+    }
+
+    function closeCta() {
+      document.getElementById("cta-modal").hidden = true;
+    }
+
+    document.querySelectorAll(".tabs [role=tab]").forEach((btn) => {
+      btn.addEventListener("click", () => playChat(btn.dataset.tab));
+    });
+    document.getElementById("cta-start").addEventListener("click", openCta);
+    document.getElementById("cta-close").addEventListener("click", closeCta);
+    document.getElementById("cta-modal").addEventListener("click", (e) => {
+      if (e.target.id === "cta-modal") closeCta();
+    });
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") closeCta();
+    });
+
+    playChat("barber");
+  </script>
+</body>
+</html>
