@@ -1,0 +1,1268 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#0a0a0a" />
+  <meta name="description" content="HERMES — KI-Assistent für Betriebe in Villingen-Schwenningen. Keine Anfrage mehr verpassen." />
+  <title>HERMES — Keine Anfrage mehr verpassen.</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Syne:wght@700;800&display=swap" rel="stylesheet" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23f5a623'/%3E%3Ctext x='16' y='23' text-anchor='middle' font-family='Syne,sans-serif' font-weight='800' font-size='18' fill='%230a0a0a'%3EH%3C/text%3E%3C/svg%3E" />
+  <style>
+    :root {
+      --bg: #0a0a0a;
+      --card: #151515;
+      --card-2: #1b1b1b;
+      --accent: #f5a623;
+      --accent-soft: rgba(245, 166, 35, 0.14);
+      --accent-line: rgba(245, 166, 35, 0.28);
+      --text: #ffffff;
+      --muted: #9c9c9c;
+      --muted-2: #6e6e6e;
+      --online: #7ddb8a;
+      --border: #242424;
+      --danger-mute: #c4c4c4;
+      --radius: 18px;
+      --shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+      --header-h: 0px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    html, body { background: var(--bg); color: var(--text); }
+    body {
+      font-family: "Manrope", system-ui, sans-serif;
+      font-size: 16px;
+      line-height: 1.5;
+      min-height: 100dvh;
+      -webkit-font-smoothing: antialiased;
+      text-rendering: optimizeLegibility;
+    }
+
+    .grain {
+      pointer-events: none;
+      position: fixed;
+      inset: 0;
+      z-index: 50;
+      opacity: 0.045;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23n)'/%3E%3C/svg%3E");
+    }
+
+    .wrap {
+      width: min(1120px, calc(100% - 32px));
+      margin: 0 auto;
+    }
+
+    /* Header */
+    header.app-header {
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      background: rgba(10, 10, 10, 0.86);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--border);
+    }
+    header.app-header::before {
+      content: "";
+      display: block;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, var(--accent) 20%, #ffd27a 50%, var(--accent) 80%, transparent);
+    }
+    .header-inner { padding: 16px 0 14px; }
+    .brand-row {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-width: 0;
+    }
+    .logo-mark {
+      flex-shrink: 0;
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      background: var(--accent);
+      color: #0a0a0a;
+      font-family: "Syne", sans-serif;
+      font-weight: 800;
+      font-size: 22px;
+      display: grid;
+      place-items: center;
+      letter-spacing: -0.04em;
+      box-shadow: 0 0 0 1px rgba(245, 166, 35, 0.4), 0 8px 24px rgba(245, 166, 35, 0.22);
+    }
+    .brand h1 {
+      font-family: "Syne", sans-serif;
+      font-weight: 800;
+      font-size: 1.35rem;
+      letter-spacing: 0.16em;
+      line-height: 1;
+    }
+    .slogan {
+      margin-top: 4px;
+      color: var(--muted);
+      font-size: 0.82rem;
+      font-weight: 500;
+    }
+    .subtitle {
+      color: var(--muted-2);
+      font-size: 0.78rem;
+      font-weight: 500;
+      max-width: 16rem;
+      text-align: right;
+      line-height: 1.35;
+    }
+
+    nav.switch {
+      margin-top: 14px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      padding: 5px;
+      background: #101010;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+    }
+    nav.switch button {
+      appearance: none;
+      border: 0;
+      background: transparent;
+      color: var(--muted);
+      font-family: inherit;
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      padding: 11px 8px;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: background .2s, color .2s, box-shadow .2s;
+    }
+    nav.switch button[aria-pressed="true"] {
+      background: var(--accent);
+      color: #0a0a0a;
+      box-shadow: 0 6px 16px rgba(245, 166, 35, 0.25);
+    }
+    nav.switch button:hover:not([aria-pressed="true"]) { color: var(--text); background: #1a1a1a; }
+    nav.switch button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+    main { padding: 22px 0 80px; }
+
+    .view[hidden] { display: none !important; }
+
+    /* Cards */
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 18px 18px 16px;
+      box-shadow: var(--shadow);
+    }
+    .card h2 {
+      font-size: 0.72rem;
+      font-weight: 800;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 14px;
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+    .stat {
+      min-height: 108px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+    .stat-value {
+      font-family: "Syne", sans-serif;
+      font-weight: 800;
+      font-size: 1.7rem;
+      letter-spacing: -0.03em;
+      line-height: 1.1;
+      font-variant-numeric: tabular-nums;
+    }
+    .stat-value.editable {
+      cursor: text;
+      display: inline-flex;
+      align-items: baseline;
+      gap: 2px;
+      border-radius: 8px;
+      padding: 2px 4px 2px 0;
+    }
+    .stat-value.editable:hover { color: var(--accent); }
+    .stat-value.editable:focus-within { outline: 2px solid var(--accent); outline-offset: 2px; }
+    .stat-value input {
+      width: 5.5ch;
+      background: transparent;
+      border: 0;
+      color: inherit;
+      font: inherit;
+      font-variant-numeric: tabular-nums;
+      outline: none;
+      min-width: 0;
+    }
+    .stat-hint { color: var(--muted); font-size: 0.8rem; font-weight: 500; margin-top: 8px; }
+    .edit-affordance {
+      font-size: 0.72rem;
+      color: var(--muted-2);
+      margin-left: 6px;
+      font-family: "Manrope", system-ui, sans-serif;
+      font-weight: 600;
+      letter-spacing: 0;
+    }
+    .stat-value.editable:hover .edit-affordance { color: var(--accent); }
+
+    .grid-2 {
+      display: grid;
+      gap: 12px;
+    }
+
+    /* Top 5 */
+    ol.top5 { list-style: none; display: grid; gap: 8px; }
+    ol.top5 li {
+      display: grid;
+      grid-template-columns: 28px 1fr;
+      gap: 10px;
+      align-items: start;
+      padding: 10px 10px;
+      background: var(--card-2);
+      border: 1px solid #202020;
+      border-radius: 12px;
+    }
+    .rank {
+      width: 28px; height: 28px;
+      border-radius: 8px;
+      background: var(--accent-soft);
+      color: var(--accent);
+      font-weight: 800;
+      font-size: 0.8rem;
+      display: grid; place-items: center;
+    }
+    .who { font-weight: 700; font-size: 0.95rem; }
+    .meta { color: var(--muted); font-size: 0.8rem; margin-top: 1px; }
+
+    /* Angebote */
+    .offer {
+      position: relative;
+      padding: 14px 14px 12px;
+      border-radius: 14px;
+      border: 1px solid #202020;
+      background: var(--card-2);
+      margin-bottom: 10px;
+    }
+    .offer.featured {
+      border-color: var(--accent-line);
+      background: linear-gradient(180deg, rgba(245,166,35,0.08), transparent 70%), var(--card-2);
+    }
+    .offer-top { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 6px; }
+    .offer-name { font-weight: 800; font-size: 0.95rem; }
+    .badge {
+      font-size: 0.62rem;
+      font-weight: 800;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      padding: 4px 8px;
+      border-radius: 999px;
+      background: var(--accent);
+      color: #0a0a0a;
+    }
+    .badge.quiet {
+      background: #2a2a2a;
+      color: #d6d6d6;
+    }
+    .price { font-size: 0.95rem; }
+    .price .now { font-weight: 800; color: var(--accent); font-size: 1.15rem; }
+    .price s { color: var(--muted-2); margin: 0 4px; }
+    .price .plus { color: var(--muted); font-size: 0.82rem; display: block; margin-top: 2px; }
+    .hint {
+      color: var(--muted);
+      font-size: 0.78rem;
+      line-height: 1.45;
+      padding-top: 4px;
+    }
+
+    /* Tasks */
+    .tasks { display: grid; gap: 8px; }
+    .task {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 12px;
+      background: var(--card-2);
+      border: 1px solid #202020;
+      border-radius: 12px;
+      cursor: pointer;
+      user-select: none;
+    }
+    .task input {
+      appearance: none;
+      width: 20px; height: 20px;
+      flex-shrink: 0;
+      margin-top: 1px;
+      border-radius: 6px;
+      border: 1.5px solid #3a3a3a;
+      background: #101010;
+      display: grid;
+      place-items: center;
+      cursor: pointer;
+    }
+    .task input:checked {
+      background: var(--accent);
+      border-color: var(--accent);
+    }
+    .task input:checked::after {
+      content: "";
+      width: 5px; height: 9px;
+      border: solid #0a0a0a;
+      border-width: 0 2px 2px 0;
+      transform: rotate(45deg) translate(-0.5px, -1px);
+    }
+    .task span { font-weight: 600; font-size: 0.92rem; }
+    .task:has(input:checked) span { color: var(--muted); text-decoration: line-through; }
+
+    /* Regeln */
+    ul.rules { list-style: none; display: grid; gap: 10px; }
+    ul.rules li {
+      padding-left: 16px;
+      position: relative;
+      color: #e8e8e8;
+      font-size: 0.92rem;
+      font-weight: 500;
+    }
+    ul.rules li::before {
+      content: "";
+      position: absolute;
+      left: 0; top: 0.55em;
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      background: var(--accent);
+    }
+
+    /* Progress */
+    .progress-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+    .progress-head strong { font-size: 1.05rem; }
+    .pct { color: var(--accent); font-weight: 800; font-variant-numeric: tabular-nums; }
+    .bar {
+      height: 12px;
+      background: #0f0f0f;
+      border: 1px solid #2a2a2a;
+      border-radius: 999px;
+      overflow: hidden;
+    }
+    .bar > i {
+      display: block;
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, #c47d10, var(--accent) 60%, #ffd27a);
+      border-radius: inherit;
+      transition: width .5s ease;
+      min-width: 0;
+    }
+    .realistic { margin-top: 12px; color: var(--muted); font-size: 0.84rem; }
+
+    /* Anschreiben */
+    .pitch {
+      border: 1px solid #202020;
+      background: var(--card-2);
+      border-radius: 14px;
+      padding: 14px;
+      margin-bottom: 10px;
+    }
+    .pitch-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 8px;
+    }
+    .pitch-head h3 { font-size: 0.95rem; font-weight: 800; }
+    .copy-btn, .ghost-btn, .cta, .icon-btn {
+      font-family: inherit;
+      cursor: pointer;
+    }
+    .copy-btn {
+      border: 1px solid var(--accent-line);
+      background: var(--accent-soft);
+      color: var(--accent);
+      font-weight: 800;
+      font-size: 0.72rem;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      padding: 7px 10px;
+      border-radius: 999px;
+      white-space: nowrap;
+    }
+    .copy-btn.done {
+      background: rgba(125, 219, 138, 0.14);
+      border-color: rgba(125, 219, 138, 0.35);
+      color: var(--online);
+    }
+    .pitch p { color: #dcdcdc; font-size: 0.88rem; line-height: 1.55; white-space: pre-wrap; }
+    .yes-card {
+      margin-top: 4px;
+      border-color: var(--accent-line);
+      background: linear-gradient(180deg, rgba(245,166,35,0.07), transparent 80%), var(--card-2);
+    }
+
+    /* Demo */
+    .demo-intro {
+      text-align: center;
+      margin-bottom: 16px;
+    }
+    .demo-intro p {
+      color: var(--muted);
+      font-size: 0.92rem;
+    }
+
+    .tabs {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 8px;
+      margin-bottom: 14px;
+    }
+    .tabs button {
+      appearance: none;
+      border: 1px solid var(--border);
+      background: var(--card);
+      color: var(--muted);
+      font-family: inherit;
+      font-weight: 800;
+      font-size: 0.85rem;
+      padding: 11px 8px;
+      border-radius: 12px;
+      cursor: pointer;
+    }
+    .tabs button[aria-selected="true"] {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #0a0a0a;
+    }
+    .tabs button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+    .phone {
+      background: #0e0e0e;
+      border: 1px solid #2a2a2a;
+      border-radius: 24px;
+      overflow: hidden;
+      box-shadow: 0 20px 50px rgba(0,0,0,.45);
+      margin-bottom: 14px;
+    }
+    .chat-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 14px 16px;
+      background: #121212;
+      border-bottom: 1px solid #242424;
+    }
+    .avatar {
+      width: 42px; height: 42px;
+      border-radius: 50%;
+      background: var(--accent);
+      color: #0a0a0a;
+      font-family: "Syne", sans-serif;
+      font-weight: 800;
+      display: grid; place-items: center;
+      font-size: 1rem;
+    }
+    .chat-title { font-weight: 800; font-size: 0.98rem; }
+    .status {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      color: var(--online);
+      font-size: 0.75rem;
+      font-weight: 600;
+      margin-top: 1px;
+    }
+    .dot {
+      width: 8px; height: 8px;
+      background: var(--online);
+      border-radius: 50%;
+      box-shadow: 0 0 0 4px rgba(125, 219, 138, 0.18);
+    }
+    .chat-body {
+      min-height: 320px;
+      padding: 16px 14px 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      background:
+        radial-gradient(1200px 200px at 50% -40px, rgba(245,166,35,0.06), transparent 50%),
+        #0c0c0c;
+    }
+    .bubble {
+      max-width: 86%;
+      padding: 10px 12px;
+      border-radius: 16px;
+      font-size: 0.92rem;
+      line-height: 1.45;
+      animation: pop .28s ease;
+      word-wrap: break-word;
+    }
+    .bubble.in {
+      align-self: flex-start;
+      background: #1c1c1c;
+      border: 1px solid #2a2a2a;
+      border-bottom-left-radius: 5px;
+      color: #f3f3f3;
+    }
+    .bubble.out {
+      align-self: flex-end;
+      background: linear-gradient(180deg, #ffb03a, var(--accent));
+      color: #1a1000;
+      font-weight: 600;
+      border-bottom-right-radius: 5px;
+    }
+    .who-label {
+      font-size: 0.68rem;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      margin-bottom: 3px;
+      opacity: 0.7;
+    }
+    .bubble.out .who-label { color: #5a3a00; opacity: 1; }
+    .bubble.in .who-label { color: var(--accent); opacity: 1; }
+
+    .typing {
+      align-self: flex-end;
+      display: inline-flex;
+      gap: 5px;
+      padding: 12px 14px;
+      background: #2a2114;
+      border-radius: 16px 16px 5px 16px;
+    }
+    .typing i {
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      background: var(--accent);
+      animation: bounce 1s infinite;
+    }
+    .typing i:nth-child(2) { animation-delay: .15s; }
+    .typing i:nth-child(3) { animation-delay: .3s; }
+
+    @keyframes bounce {
+      0%, 60%, 100% { transform: translateY(0); opacity: .4; }
+      30% { transform: translateY(-4px); opacity: 1; }
+    }
+    @keyframes pop {
+      from { opacity: 0; transform: translateY(8px) scale(.98); }
+      to { opacity: 1; transform: none; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .bubble, .bar > i, .typing i { animation: none; transition: none; }
+    }
+
+    .how { display: grid; gap: 10px; }
+    .how-step {
+      display: grid;
+      grid-template-columns: 36px 1fr;
+      gap: 12px;
+      align-items: center;
+      padding: 10px 4px;
+    }
+    .how-step .n {
+      width: 36px; height: 36px;
+      border-radius: 10px;
+      background: var(--accent);
+      color: #0a0a0a;
+      font-family: "Syne", sans-serif;
+      font-weight: 800;
+      display: grid; place-items: center;
+    }
+    .how-step p { font-size: 0.95rem; font-weight: 600; }
+
+    .banner {
+      margin-top: 12px;
+      padding: 20px 18px;
+      border-radius: var(--radius);
+      border: 1px solid var(--accent-line);
+      background:
+        radial-gradient(500px 120px at 80% 0%, rgba(245,166,35,0.16), transparent 60%),
+        var(--card);
+      text-align: center;
+    }
+    .banner h3 {
+      font-family: "Manrope", system-ui, sans-serif;
+      font-size: 1.12rem;
+      font-weight: 800;
+      letter-spacing: -0.01em;
+      line-height: 1.35;
+    }
+    .banner .sub { color: var(--muted); margin: 6px 0 16px; font-size: 0.88rem; }
+    .cta {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      width: 100%;
+      max-width: 420px;
+      border: 0;
+      background: var(--accent);
+      color: #0a0a0a;
+      font-weight: 800;
+      font-size: 0.95rem;
+      padding: 14px 16px;
+      border-radius: 14px;
+      box-shadow: 0 10px 24px rgba(245, 166, 35, 0.25);
+      text-decoration: none;
+    }
+    .cta:hover { filter: brightness(1.05); }
+    .cta:focus-visible { outline: 2px solid #fff; outline-offset: 3px; }
+
+    /* Modal */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      z-index: 40;
+      background: rgba(0,0,0,.64);
+      display: grid;
+      place-items: end center;
+      padding: 16px;
+    }
+    .modal-backdrop[hidden] { display: none !important; }
+    .modal {
+      width: min(440px, 100%);
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 22px 20px 18px;
+      box-shadow: 0 24px 60px rgba(0,0,0,.5);
+      animation: pop .25s ease;
+    }
+    .modal h3 {
+      font-family: "Syne", sans-serif;
+      font-size: 1.2rem;
+      margin-bottom: 8px;
+    }
+    .modal p { color: var(--muted); font-size: 0.95rem; margin-bottom: 16px; }
+    .modal-actions { display: grid; gap: 8px; }
+    .modal a, .modal .disabled-link {
+      display: block;
+      text-align: center;
+      text-decoration: none;
+      font-weight: 800;
+      padding: 12px;
+      border-radius: 12px;
+    }
+    .modal a.wa, .modal .disabled-link.wa { background: #1f3d28; color: var(--online); border: 1px solid #2e5a3c; }
+    .modal a.ig, .modal .disabled-link.ig { background: #2a2114; color: var(--accent); border: 1px solid var(--accent-line); }
+    .modal .disabled-link { opacity: .55; cursor: default; }
+    .modal .close {
+      margin-top: 10px;
+      width: 100%;
+      border: 0;
+      background: #222;
+      color: #fff;
+      font-family: inherit;
+      font-weight: 700;
+      padding: 11px;
+      border-radius: 12px;
+      cursor: pointer;
+    }
+
+    footer.note {
+      text-align: center;
+      color: var(--muted-2);
+      font-size: 0.75rem;
+      margin-top: 28px;
+    }
+
+    @media (min-width: 780px) {
+      .wrap { width: min(1120px, calc(100% - 48px)); }
+      .header-inner { padding: 18px 0 16px; }
+      .brand h1 { font-size: 1.55rem; }
+      nav.switch { max-width: 560px; }
+      nav.switch button { font-size: 0.78rem; padding: 12px 10px; }
+      .stats { grid-template-columns: repeat(4, 1fr); }
+      .stat-value { font-size: 1.85rem; }
+      .grid-2 { grid-template-columns: 1fr 1fr; }
+      .chat-body { min-height: 360px; padding: 18px 18px 22px; }
+      .bubble { max-width: 74%; font-size: 0.98rem; }
+      .modal-backdrop { place-items: center; }
+      .cta { width: auto; padding: 14px 28px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="grain" aria-hidden="true"></div>
+  <header class="app-header">
+    <div class="wrap header-inner">
+      <div class="brand-row">
+        <div class="brand">
+          <div class="logo-mark" aria-hidden="true">H</div>
+          <div>
+            <h1>HERMES</h1>
+            <p class="slogan">Keine Anfrage mehr verpassen.</p>
+          </div>
+        </div>
+        <p class="subtitle">KI-Assistent für Betriebe in Villingen-Schwenningen</p>
+      </div>
+      <nav class="switch" aria-label="Ansichten">
+        <button type="button" id="nav-dashboard" data-view="dashboard" aria-pressed="true">DASHBOARD - FÜR MICH</button>
+        <button type="button" id="nav-demo" data-view="demo" aria-pressed="false">DEMO - FÜR KUNDEN</button>
+      </nav>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <section id="view-dashboard" class="view" aria-label="Dashboard">
+      <div class="stats">
+        <article class="card stat">
+          <div>
+            <div class="stat-value editable" id="revenue-wrap" title="Klicken zum Bearbeiten">
+              <span id="revenue-display">0 €</span>
+              <span class="edit-affordance" aria-hidden="true">✎</span>
+            </div>
+          </div>
+          <p class="stat-hint">Umsatz - 1 Zahlung = Beweis</p>
+        </article>
+        <article class="card stat">
+          <div class="stat-value">5.000 €</div>
+          <p class="stat-hint">Ziel bis 23.11</p>
+        </article>
+        <article class="card stat">
+          <div class="stat-value">5</div>
+          <p class="stat-hint">Top-Kunden für Proof</p>
+        </article>
+        <article class="card stat">
+          <div class="stat-value">25 / Tag</div>
+          <p class="stat-hint">Sprint</p>
+        </article>
+      </div>
+
+      <div class="grid-2">
+        <article class="card">
+          <h2>Top 5</h2>
+          <ol class="top5">
+            <li>
+              <span class="rank">1</span>
+              <div>
+                <div class="who">Barber.Show78</div>
+                <div class="meta">Barber · Fade 35€</div>
+              </div>
+            </li>
+            <li>
+              <span class="rank">2</span>
+              <div>
+                <div class="who">Helena Kosmetik</div>
+                <div class="meta">Kosmetik · PMU 249€</div>
+              </div>
+            </li>
+            <li>
+              <span class="rank">3</span>
+              <div>
+                <div class="who">Elektro-Luca</div>
+                <div class="meta">Elektro · Wallbox 1200€</div>
+              </div>
+            </li>
+            <li>
+              <span class="rank">4</span>
+              <div>
+                <div class="who">Nail Deluxe by Nadja</div>
+                <div class="meta">Nails</div>
+              </div>
+            </li>
+            <li>
+              <span class="rank">5</span>
+              <div>
+                <div class="who">Shano Barber</div>
+                <div class="meta">Barber</div>
+              </div>
+            </li>
+          </ol>
+        </article>
+
+        <article class="card">
+          <h2>Angebote</h2>
+          <div class="offer featured">
+            <div class="offer-top">
+              <div class="offer-name">Standard Pilot</div>
+              <span class="badge">Bevorzugt</span>
+            </div>
+            <div class="price">
+              <span class="now">345€</span> <s>690€</s>
+              <span class="plus">+ 149€ / Monat</span>
+            </div>
+          </div>
+          <div class="offer">
+            <div class="offer-top">
+              <div class="offer-name">Premium Pilot</div>
+              <span class="badge quiet">Premium</span>
+            </div>
+            <div class="price">
+              <span class="now">595€</span> <s>1190€</s>
+              <span class="plus">+ 249€ / Monat</span>
+            </div>
+          </div>
+          <p class="hint">Zahlung per Überweisung. IBAN nur in App unter Kunden &amp; Abo, nicht im Chat.</p>
+        </article>
+
+        <article class="card">
+          <h2>Heute - Experte allein</h2>
+          <div class="tasks">
+            <label class="task"><input type="checkbox" data-task="0" /><span>5 Anschreiben + Kollage schicken</span></label>
+            <label class="task"><input type="checkbox" data-task="1" /><span>Demo an die 5 schicken</span></label>
+            <label class="task"><input type="checkbox" data-task="2" /><span>IBAN in App prüfen</span></label>
+            <label class="task"><input type="checkbox" data-task="3" /><span>Antworten 18:00 prüfen</span></label>
+          </div>
+        </article>
+
+        <article class="card">
+          <h2>Regeln</h2>
+          <ul class="rules">
+            <li>Max 25 / Tag im Sprint, sonst 5 / Tag</li>
+            <li>Nie nach 20:00, nie Sonntags</li>
+            <li>Nie wieder nach Absage</li>
+            <li>Absender: Hermes Team aus Schwenningen, kein persönlicher Name</li>
+            <li>Kein Besuch, kein Anruf, kein Verkaufsgespräch von dir</li>
+          </ul>
+        </article>
+      </div>
+
+      <article class="card" style="margin-top:12px">
+        <h2>Umsatz-Fortschritt</h2>
+        <div class="progress-head">
+          <strong><span id="progress-revenue">0 €</span> von 5.000 €</strong>
+          <span class="pct" id="progress-pct">0%</span>
+        </div>
+        <div class="bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="progress-bar">
+          <i id="progress-fill"></i>
+        </div>
+        <p class="realistic">Realistisch: 1. Zahlung 20. / 21.11, spätestens 23.11</p>
+      </article>
+
+      <article class="card" style="margin-top:12px">
+        <h2>Anschreiben</h2>
+        <div id="pitches"></div>
+      </article>
+    </section>
+
+    <section id="view-demo" class="view" hidden aria-label="Demo für Kunden">
+      <div class="demo-intro">
+        <p>So antwortet Hermes — in 30 Sekunden, mit Preis und freiem Termin.</p>
+      </div>
+      <div class="tabs" role="tablist" aria-label="Branchen">
+        <button type="button" role="tab" id="tab-barber" aria-selected="true" data-tab="barber">Barber</button>
+        <button type="button" role="tab" id="tab-kosmetik" aria-selected="false" data-tab="kosmetik">Kosmetik</button>
+        <button type="button" role="tab" id="tab-elektro" aria-selected="false" data-tab="elektro">Elektro</button>
+      </div>
+
+      <div class="phone">
+        <div class="chat-header">
+          <div class="avatar">H</div>
+          <div>
+            <div class="chat-title" id="chat-title">Hermes · Barber</div>
+            <div class="status"><span class="dot" aria-hidden="true"></span><span>online · antwortet sofort</span></div>
+          </div>
+        </div>
+        <div class="chat-body" id="chat-body" aria-live="polite"></div>
+      </div>
+
+      <article class="card">
+        <h2>So funktioniert Hermes</h2>
+        <div class="how">
+          <div class="how-step"><span class="n">1</span><p>Kunde schreibt per WhatsApp / Instagram DM</p></div>
+          <div class="how-step"><span class="n">2</span><p>Hermes antwortet in 30 Sekunden</p></div>
+          <div class="how-step"><span class="n">3</span><p>Termin direkt gebucht</p></div>
+        </div>
+      </article>
+
+      <div class="banner">
+        <h3>30 Tage testen - Pilot 345 € statt 690 €</h3>
+        <p class="sub">danach 149 € / Monat, jederzeit kündbar</p>
+        <button type="button" class="cta" id="cta-start">Jetzt Pilot starten - per WhatsApp / Instagram DM</button>
+      </div>
+    </section>
+
+    <footer class="note">Hermes Team aus Schwenningen</footer>
+  </main>
+
+  <div class="modal-backdrop" id="cta-modal" hidden>
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="cta-modal-title">
+      <h3 id="cta-modal-title">Pilot starten</h3>
+      <p id="cta-modal-text">Schreib uns per WhatsApp oder Instagram DM – Hermes Team aus Schwenningen</p>
+      <div class="modal-actions" id="cta-modal-actions"></div>
+      <button type="button" class="close" id="cta-close">Schließen</button>
+    </div>
+  </div>
+
+  <script>
+    /* ============================================================
+       CONFIG — hier WhatsApp-Nummer und Instagram-Handle eintragen.
+       Wenn gesetzt, führt der Button zu wa.me bzw. Instagram.
+       Nummer ohne + und Leerzeichen, z. B. "491701234567"
+       Handle ohne @, z. B. "hermes.vs"
+       ============================================================ */
+    const CONFIG = {
+      whatsappNumber: "",
+      instagramHandle: ""
+    };
+
+    const GOAL = 5000;
+    const STORAGE_REVENUE = "hermes-revenue";
+    const STORAGE_TASKS = "hermes-tasks";
+
+    const PITCHES = [
+      {
+        name: "Barber.Show78",
+        text: "Hey, Hermes Team aus Schwenningen hier. Euer Fade + Bart ist stark, aber viele Anfragen gehen verloren, wenn ihr gerade im Termin seid. Hermes antwortet in 30 Sek auf WhatsApp / Instagram mit Preis und freien Zeiten und bucht den Termin direkt. Soll ich euch die Demo in 2 Min zeigen? Pilot 345€ statt 690€, 30 Tage testen."
+      },
+      {
+        name: "Helena Kosmetikstudio",
+        text: "Hey, Hermes Team aus Schwenningen hier. Bei PMU Lippen ab 249€ fragen viele nach Preis und Samstag-Termin, genau wenn ihr in Behandlung seid. Hermes antwortet in 30 Sek, nennt Preis inkl. Nachbehandlung und bucht direkt. Soll ich euch die Demo in 2 Min zeigen? Pilot 345€ statt 690€, 30 Tage testen."
+      },
+      {
+        name: "Elektro-Luca",
+        text: "Hey, Hermes Team aus Schwenningen hier. Bei Wallbox-Anfragen wartet der Kunde oft zu lange und geht woanders hin. Hermes antwortet in 30 Sek, fragt Leistung / Ort ab und sichert den Kontakt. Soll ich euch die Demo in 2 Min zeigen? Pilot 345€ statt 690€, 30 Tage testen."
+      },
+      {
+        name: "Nail Deluxe by Nadja",
+        text: "Hey, Hermes Team aus Schwenningen hier. Nagel-Termine werden oft abends per DM gefragt, wenn ihr schon zu habt. Hermes antwortet in 30 Sek mit Preisen und freien Zeiten und bucht direkt. Soll ich euch die Demo in 2 Min zeigen? Pilot 345€ statt 690€, 30 Tage testen."
+      },
+      {
+        name: "Shano Barber Shop",
+        text: "Hey, Hermes Team aus Schwenningen hier. Fade + Bart Anfragen kommen oft, wenn ihr gerade schneidet. Hermes antwortet in 30 Sek und bucht den Termin, statt dass die Anfrage verloren geht. Soll ich euch die Demo in 2 Min zeigen? Pilot 345€ statt 690€, 30 Tage testen."
+      }
+    ];
+
+    const YES_TEXT = "Super, dann starten wir. Pilot 345€ einmalig, danach 149€ / Monat, jederzeit kündbar. Du überweist auf die IBAN aus der App, Verwendungszweck: Hermes Pilot + dein Salonname. Sobald es da ist, richte ich alles in 5 Minuten ein.";
+
+    const CHATS = {
+      barber: {
+        title: "Hermes · Barber",
+        messages: [
+          { from: "in", who: "Kunde", text: "Was kostet Fade + Bart? Habt ihr heute noch frei?" },
+          { from: "out", who: "Hermes", text: "Fade + Bart 35 Euro. Heute frei: 15:30, 17:00, 18:45 - soll ich 15:30 buchen?" },
+          { from: "in", who: "Kunde", text: "Ja" },
+          { from: "out", who: "Hermes", text: "Bestätigt! Termin 15:30 gebucht." }
+        ]
+      },
+      kosmetik: {
+        title: "Hermes · Kosmetik",
+        messages: [
+          { from: "in", who: "Kundin", text: "Was kostet PMU Lippen? Habt ihr Samstag frei?" },
+          { from: "out", who: "Hermes", text: "PMU Lippen ab 249 € inkl. Nachbehandlung. Samstag frei: 10:00, 14:30, 16:00 - soll ich 14:30 buchen?" },
+          { from: "in", who: "Kundin", text: "14:30 bitte" },
+          { from: "out", who: "Hermes", text: "Bestätigt! PMU Lippen Samstag 14:30 gebucht + Erinnerung automatisch." }
+        ]
+      },
+      elektro: {
+        title: "Hermes · Elektro",
+        messages: [
+          { from: "in", who: "Kunde", text: "Was kostet Wallbox?" },
+          { from: "out", who: "Hermes", text: "Wallbox ab 1200 € inkl. Installation & Beratung. Wann passt Besichtigung?" },
+          { from: "in", who: "Kunde", text: "Morgen" },
+          { from: "out", who: "Hermes", text: "Termin gesichert! Details per DM." }
+        ]
+      }
+    };
+
+    function euro(n) {
+      const v = Math.round(Number(n) || 0);
+      return v.toLocaleString("de-DE") + " €";
+    }
+
+    function loadRevenue() {
+      const raw = localStorage.getItem(STORAGE_REVENUE);
+      if (raw === null || raw === "") return 0;
+      const n = Number(raw);
+      return Number.isFinite(n) ? n : 0;
+    }
+
+    function saveRevenue(n) {
+      localStorage.setItem(STORAGE_REVENUE, String(n));
+    }
+
+    function restoreRevenueDisplay() {
+      const wrap = document.getElementById("revenue-wrap");
+      wrap.innerHTML = '<span id="revenue-display"></span><span class="edit-affordance" aria-hidden="true">✎</span>';
+      renderRevenue();
+    }
+
+    function renderRevenue() {
+      const n = loadRevenue();
+      document.getElementById("revenue-display").textContent = euro(n);
+      document.getElementById("progress-revenue").textContent = euro(n);
+      const pct = Math.max(0, Math.min(100, (n / GOAL) * 100));
+      const label = (Math.round(pct * 10) / 10) + "%";
+      document.getElementById("progress-pct").textContent = label;
+      document.getElementById("progress-fill").style.width = pct + "%";
+      const bar = document.getElementById("progress-bar");
+      bar.setAttribute("aria-valuenow", String(Math.round(pct)));
+    }
+
+    function startRevenueEdit() {
+      const wrap = document.getElementById("revenue-wrap");
+      if (wrap.querySelector("input")) return;
+      const current = loadRevenue();
+      wrap.innerHTML = "";
+      const input = document.createElement("input");
+      input.type = "number";
+      input.min = "0";
+      input.step = "1";
+      input.inputMode = "numeric";
+      input.value = String(current);
+      input.setAttribute("aria-label", "Umsatz in Euro");
+      const suffix = document.createElement("span");
+      suffix.textContent = "€";
+      wrap.append(input, suffix);
+      input.focus();
+      input.select();
+      const commit = () => {
+        const n = Math.max(0, Math.round(Number(input.value) || 0));
+        saveRevenue(n);
+        restoreRevenueDisplay();
+      };
+      input.addEventListener("blur", commit);
+      input.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") { e.preventDefault(); input.blur(); }
+        if (e.key === "Escape") {
+          restoreRevenueDisplay();
+        }
+      });
+    }
+
+    function loadTasks() {
+      try {
+        const raw = JSON.parse(localStorage.getItem(STORAGE_TASKS) || "[]");
+        return Array.isArray(raw) ? raw : [];
+      } catch { return []; }
+    }
+
+    function saveTasks(list) {
+      localStorage.setItem(STORAGE_TASKS, JSON.stringify(list));
+    }
+
+    function initTasks() {
+      const saved = loadTasks();
+      document.querySelectorAll('input[data-task]').forEach((el) => {
+        const i = Number(el.dataset.task);
+        el.checked = Boolean(saved[i]);
+        el.addEventListener("change", () => {
+          const next = loadTasks();
+          next[i] = el.checked;
+          saveTasks(next);
+        });
+      });
+    }
+
+    function copyText(text, btn) {
+      const done = () => {
+        const prev = btn.textContent;
+        btn.textContent = "Kopiert!";
+        btn.classList.add("done");
+        setTimeout(() => { btn.textContent = prev; btn.classList.remove("done"); }, 1400);
+      };
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(done).catch(() => fallbackCopy(text, done));
+      } else {
+        fallbackCopy(text, done);
+      }
+    }
+
+    function fallbackCopy(text, done) {
+      const ta = document.createElement("textarea");
+      ta.value = text;
+      ta.setAttribute("readonly", "");
+      ta.style.position = "fixed";
+      ta.style.left = "-9999px";
+      document.body.appendChild(ta);
+      ta.select();
+      try { document.execCommand("copy"); done(); } catch {}
+      ta.remove();
+    }
+
+    function renderPitches() {
+      const root = document.getElementById("pitches");
+      root.innerHTML = "";
+      PITCHES.forEach((p, idx) => {
+        const el = document.createElement("div");
+        el.className = "pitch";
+        el.innerHTML = '<div class="pitch-head"><h3></h3><button type="button" class="copy-btn">Kopieren</button></div><p></p>';
+        el.querySelector("h3").textContent = (idx + 1) + ". " + p.name;
+        el.querySelector("p").textContent = p.text;
+        el.querySelector("button").addEventListener("click", (e) => copyText(p.text, e.currentTarget));
+        root.appendChild(el);
+      });
+      const yes = document.createElement("div");
+      yes.className = "pitch yes-card";
+      yes.innerHTML = '<div class="pitch-head"><h3>Wenn einer Ja sagt</h3><button type="button" class="copy-btn">Kopieren</button></div><p></p>';
+      yes.querySelector("p").textContent = YES_TEXT;
+      yes.querySelector("button").addEventListener("click", (e) => copyText(YES_TEXT, e.currentTarget));
+      root.appendChild(yes);
+    }
+
+    /* Views / hash */
+    function currentView() {
+      const h = (location.hash || "").replace("#", "").toLowerCase();
+      return h === "demo" ? "demo" : "dashboard";
+    }
+
+    function setView(view, pushHash) {
+      const v = view === "demo" ? "demo" : "dashboard";
+      document.getElementById("view-dashboard").hidden = v !== "dashboard";
+      document.getElementById("view-demo").hidden = v !== "demo";
+      document.getElementById("nav-dashboard").setAttribute("aria-pressed", String(v === "dashboard"));
+      document.getElementById("nav-demo").setAttribute("aria-pressed", String(v === "demo"));
+      if (pushHash) {
+        const next = "#" + v;
+        if (location.hash !== next) history.pushState(null, "", next);
+      }
+      if (v === "demo") playChat(activeTab);
+    }
+
+    /* Chat animation */
+    let activeTab = "barber";
+    let chatToken = 0;
+
+    function reducedMotion() {
+      return window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    }
+
+    function playChat(tab) {
+      activeTab = tab;
+      const data = CHATS[tab];
+      document.getElementById("chat-title").textContent = data.title;
+      document.querySelectorAll(".tabs [role=tab]").forEach((btn) => {
+        btn.setAttribute("aria-selected", String(btn.dataset.tab === tab));
+      });
+      const body = document.getElementById("chat-body");
+      body.innerHTML = "";
+      const token = ++chatToken;
+      const msgs = data.messages;
+      if (reducedMotion()) {
+        msgs.forEach((m) => body.appendChild(bubbleEl(m)));
+        return;
+      }
+      (async () => {
+        for (const m of msgs) {
+          if (token !== chatToken) return;
+          if (m.from === "out") {
+            const typing = document.createElement("div");
+            typing.className = "typing";
+            typing.setAttribute("aria-label", "Hermes schreibt");
+            typing.innerHTML = "<i></i><i></i><i></i>";
+            body.appendChild(typing);
+            body.scrollTop = body.scrollHeight;
+            await wait(720);
+            if (token !== chatToken) return;
+            typing.remove();
+          } else {
+            await wait(280);
+            if (token !== chatToken) return;
+          }
+          body.appendChild(bubbleEl(m));
+          body.scrollTop = body.scrollHeight;
+          await wait(420);
+        }
+      })();
+    }
+
+    function bubbleEl(m) {
+      const el = document.createElement("div");
+      el.className = "bubble " + m.from;
+      const who = document.createElement("div");
+      who.className = "who-label";
+      who.textContent = m.who;
+      const t = document.createElement("div");
+      t.textContent = m.text;
+      el.append(who, t);
+      return el;
+    }
+
+    function wait(ms) { return new Promise((r) => setTimeout(r, ms)); }
+
+    /* CTA modal */
+    function openCta() {
+      const wa = (CONFIG.whatsappNumber || "").trim();
+      const ig = (CONFIG.instagramHandle || "").trim().replace(/^@/, "");
+      const actions = document.getElementById("cta-modal-actions");
+      actions.innerHTML = "";
+
+      if (wa) {
+        const a = document.createElement("a");
+        a.className = "wa";
+        a.href = "https://wa.me/" + wa.replace(/\D/g, "");
+        a.target = "_blank";
+        a.rel = "noopener noreferrer";
+        a.textContent = "Per WhatsApp schreiben";
+        actions.appendChild(a);
+      } else {
+        const d = document.createElement("div");
+        d.className = "disabled-link wa";
+        d.textContent = "WhatsApp (Nummer in CONFIG eintragen)";
+        actions.appendChild(d);
+      }
+
+      if (ig) {
+        const a = document.createElement("a");
+        a.className = "ig";
+        a.href = "https://instagram.com/" + encodeURIComponent(ig);
+        a.target = "_blank";
+        a.rel = "noopener noreferrer";
+        a.textContent = "Per Instagram DM schreiben";
+        actions.appendChild(a);
+      } else {
+        const d = document.createElement("div");
+        d.className = "disabled-link ig";
+        d.textContent = "Instagram (Handle in CONFIG eintragen)";
+        actions.appendChild(d);
+      }
+
+      document.getElementById("cta-modal").hidden = false;
+      document.getElementById("cta-close").focus();
+    }
+
+    function closeCta() {
+      document.getElementById("cta-modal").hidden = true;
+    }
+
+    /* Init */
+    document.getElementById("revenue-wrap").addEventListener("click", startRevenueEdit);
+    document.querySelectorAll("nav.switch button").forEach((btn) => {
+      btn.addEventListener("click", () => setView(btn.dataset.view, true));
+    });
+    document.querySelectorAll(".tabs [role=tab]").forEach((btn) => {
+      btn.addEventListener("click", () => playChat(btn.dataset.tab));
+    });
+    document.getElementById("cta-start").addEventListener("click", openCta);
+    document.getElementById("cta-close").addEventListener("click", closeCta);
+    document.getElementById("cta-modal").addEventListener("click", (e) => {
+      if (e.target.id === "cta-modal") closeCta();
+    });
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") closeCta();
+    });
+    window.addEventListener("hashchange", () => setView(currentView(), false));
+
+    renderRevenue();
+    initTasks();
+    renderPitches();
+    setView(currentView(), false);
+    if (!location.hash) history.replaceState(null, "", "#dashboard");
+  </script>
+</body>
+</html>
