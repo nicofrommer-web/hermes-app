@@ -1,5 +1,10 @@
 import os
+import sys
 from pathlib import Path
+
+# Ensure the repository root is importable when pytest is launched via its console script.
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(PROJECT_ROOT))
 
 os.environ.setdefault("HERMES_TENANT_ID", "hermes-ci")
 os.environ.setdefault("HERMES_SESSION_SECRET", "ci-only-secret-not-for-production")
