@@ -48,6 +48,10 @@ Use a managed PostgreSQL database and HTTPS in hosted environments. Configure al
 
 Do not commit a real `.env` file. Do not put credentials or tokens into the HTML, JavaScript, GitHub repository, or browser storage.
 
+### Optional real AI intake analysis
+
+To enable the authenticated dashboard feature, set `OPENAI_API_KEY` and `HERMES_OPENAI_MODEL` in the server's secret manager. The model value must be a model available to your API project. Never paste the key into chat or commit it. If either setting is missing, the endpoint returns 503 and the existing rule-based public demo continues to work. The endpoint uses the Responses API with a strict JSON schema and `store=false`. It creates a pending approval draft in the workspace; the original request text is not stored by HERMES, and no external action is executed. The text is still transmitted to the configured AI provider for processing, so use synthetic test data only until privacy, contractual, and security requirements have been reviewed.
+
 ## API
 
 - `POST /api/login`, `GET /api/session`, `POST /api/logout`
@@ -56,6 +60,7 @@ Do not commit a real `.env` file. Do not put credentials or tokens into the HTML
 - `GET/POST /api/tasks`
 - `GET/POST /api/approvals`
 - `POST /api/approvals/{id}/decision` — pending-only decision
+- `POST /api/ai/analyze` — authenticated AI analysis; creates a pending human-review draft only
 - `GET /api/audit`
 - `GET /health`
 
@@ -63,4 +68,4 @@ Do not commit a real `.env` file. Do not put credentials or tokens into the HTML
 
 This is a single-admin MVP, not yet a multi-user SaaS. It does not yet provide per-user RBAC, password reset, MFA, rate limiting, automated database migrations, backup scheduling, monitoring, or a formal security review. Workspace snapshots are tenant-scoped, but the single configured admin is not a full customer account system. Use only synthetic/demo data until these controls are implemented and reviewed.
 
-Agent roles and workflow switches remain configuration only. No model calls, email sending, CRM integrations, autonomous actions, or external business operations are enabled. An approval records a decision; it does not execute the approved action. The workspace currently persists a complete JSON snapshot, while the normalized leads/tasks/approvals/audit tables remain available for future migration to granular persistence.
+Agent roles and workflow switches remain configuration only. The optional AI intake analysis is separate from autonomous agent execution. No email sending, CRM integrations, or external business operations are enabled. An approval records a decision; it does not execute the approved action. The workspace currently persists a complete JSON snapshot, while the normalized leads/tasks/approvals/audit tables remain available for future migration to granular persistence.
