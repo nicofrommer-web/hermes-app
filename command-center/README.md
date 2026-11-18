@@ -1,19 +1,24 @@
 # HERMES Command Center
 
-Isolated B2B command-center MVP for the HERMES business. This folder is separate from NEXORA and all Shopify projects.
+Isolated B2B operations dashboard for HERMES. This project is separate from NEXORA and all Shopify ventures.
 
-## Current scope
+## Dashboard capabilities
 - Lead CRM with create/edit/search/filter and CSV export
-- Customer view
-- Research intake and source-note fields
-- Six agent-role controls
+- Customer view and research intake
+- Six configurable agent-role cards
 - Workflow templates and toggles
 - Task management
 - Human approval queue
-- Analytics from local records
-- Audit log and CSV backup
+- Analytics and audit log
+- Login/logout page
+- Server-side workspace persistence through the FastAPI API
 
-## Safety and current limitations
-This is a browser-only prototype. It uses LocalStorage and synthetic seed records. It has no server database, authentication, multi-user access, AI model execution, or live business integrations. Do not enter real customer personal data or secrets. Agent switches and workflow toggles configure the demo UI only; they do not start autonomous agents. Approvals record a decision locally and do not send anything externally.
+## Run and deploy
+The dashboard is served by the backend application from the same origin. Follow [the backend setup guide](../backend/README.md). Build the Docker image from the repository root using `docker build -f backend/Dockerfile -t hermes-command-center .`.
 
-Production work still required: server-side API, database with tenant isolation, authentication/RBAC, secure secret storage, backups, monitoring, privacy/legal review, integration testing and deployment hardening.
+## Current limits
+The app is a single-admin MVP. It persists the workspace in the configured database and protects the browser session with a signed HTTP-only cookie. Use a managed PostgreSQL database and HTTPS for hosting. Configure secrets only in the server environment.
+
+The first-run records are synthetic examples, not real prospects or customers. Agent cards and workflow toggles are configuration only; no model execution, email sending, CRM integrations, or autonomous external actions are active. Approval decisions are recorded but do not execute anything.
+
+Before real customer data or multi-customer use, add and review user-level RBAC, MFA, password reset, rate limiting, database migrations, scheduled backups, monitoring, privacy/legal controls, and a security review.
