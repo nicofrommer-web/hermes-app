@@ -34,7 +34,7 @@
    <button data-view="settings"><span class="ico">⚙</span>Einstellungen</button>
   </div>
  </nav>
- <div class="sidefoot">HERMES Command Center<br><span id="workspaceMode">Lokaler Demo-Modus</span><br><br>Keine externen Aktionen ohne Freigabe.</div>
+ <div class="sidefoot">HERMES Command Center<br><span id="workspaceMode">Servergespeicherter Arbeitsbereich</span><br><br>Keine externen Aktionen ohne Freigabe.<br><br><button class="btn" data-action="logout">Abmelden</button></div>
 </aside>
 <main class="main">
  <header class="top"><div style="display:flex;align-items:center;gap:12px"><button class="btn mobilemenu" id="menuBtn">☰</button><span class="crumb" id="breadcrumb">Workspace / Übersicht</span></div><div class="topright"><span class="pill"><i class="dot"></i>System lokal bereit</span><span class="pill">DE · EUR</span></div></header>
@@ -161,7 +161,8 @@ function newTask(existing){
 }
 function exportCSV(name,rows){let csv=rows.map(r=>r.map(v=>'"'+String(v??'').replace(/"/g,'""')+'"').join(';')).join('\r\n');let a=document.createElement('a');a.href=URL.createObjectURL(new Blob(['\ufeff'+csv],{type:'text/csv;charset=utf-8'}));a.download=name;a.click();URL.revokeObjectURL(a.href)}
 function action(a){
- if(a==='newLead')newLead();else if(a==='newTask')newTask();else if(a==='gotoApprovals')go('approvals');else if(a==='gotoTasks')go('tasks');else if(a==='refreshAgents'){log('System','Agentenstatus geprüft','Keine echten Agentenprozesse gestartet.');save()}
+ if(a==='logout'){fetch('/api/logout',{method:'POST',credentials:'same-origin'}).finally(()=>location.href='/login.html')}
+ else if(a==='newLead')newLead();else if(a==='newTask')newTask();else if(a==='gotoApprovals')go('approvals');else if(a==='gotoTasks')go('tasks');else if(a==='refreshAgents'){log('System','Agentenstatus geprüft','Keine echten Agentenprozesse gestartet.');save()}
  else if(a==='exportLeads')exportCSV('hermes-leads.csv',[['ID','Firma','Branche','Ort','Website','Kontakt','Status','Priorität','Potenzial','Notizen'],...db.leads.map(l=>[l.id,l.name,l.industry,l.city,l.website,l.contact,l.status,l.priority,l.need,l.notes])]);
  else if(a==='exportTasks')exportCSV('hermes-aufgaben.csv',[['ID','Aufgabe','Zuständig','Status','Fällig','Beschreibung'],...db.tasks.map(t=>[t.id,t.title,t.owner,t.status,t.due,t.desc])]);
  else if(a==='exportLogs')exportCSV('hermes-audit.csv',[['Zeit','Akteur','Aktion','Details'],...db.logs.map(l=>[l.time,l.actor,l.action,l.detail])]);
