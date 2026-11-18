@@ -43,3 +43,22 @@ Nach erfolgreichem Start die Replit-Webview öffnen und `/docs` aufrufen. Die Fa
 ## Datenhinweis
 
 Die Anwendung legt Tabellen beim Start automatisch an. Für dauerhafte Produktionsdaten sollte eine verwaltete PostgreSQL-Datenbank über `DATABASE_URL` verwendet werden. SQLite in einer flüchtigen Entwicklungsumgebung ist nicht als verlässliche Produktionsspeicherung gedacht.
+
+## GitHub Actions / automatische Prüfung
+
+Bei jedem Push auf `main` und bei Pull Requests nach `main` führt GitHub Actions die Backend-Smoke-Tests mit Python 3.12 aus. Die dort verwendeten Zugangsdaten sind ausschließlich temporäre CI-Testwerte und dürfen nicht für einen echten Betrieb verwendet werden.
+
+Den Status findest du im Repository unter **Actions → HERMES backend tests**. Ein grüner Lauf ist Voraussetzung für die technische Freigabe des jeweiligen Commits.
+
+## Produktions-Checkliste
+
+Vor einem Einsatz mit echten Unternehmensdaten:
+
+1. Alle vier erforderlichen Secrets ausschließlich in der Deployment-Umgebung hinterlegen.
+2. Für dauerhafte Daten eine verwaltete PostgreSQL-Datenbank über `DATABASE_URL` konfigurieren.
+3. HTTPS aktivieren und `HERMES_COOKIE_SECURE=true` beibehalten.
+4. Ein individuelles, starkes Admin-Passwort und einen zufälligen `HERMES_SESSION_SECRET` verwenden.
+5. Nach dem Deployment `/health` prüfen. Die Antwort muss HTTP 200 sowie `"database": "ok"` enthalten.
+6. Backup, Wiederherstellung, Zugriffsrechte und Datenschutzprozesse vor dem Produktivbetrieb testen.
+
+**Funktionsgrenze:** Die vorhandenen Agenten und Workflows im Dashboard sind derzeit Prozessvorlagen bzw. Demo-Funktionen. Ohne zusätzliche Integrationen und implementierte Ausführungslogik führen sie keine eigenständigen KI-Aktionen oder externen Kundenkontakte aus.
