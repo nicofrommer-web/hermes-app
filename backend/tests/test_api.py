@@ -74,3 +74,19 @@ def test_approval_can_only_be_decided_once():
         "decision": "rejected", "actor": "test-user"
     })
     assert second.status_code == 409
+
+def test_public_demo_analysis_is_stateless_and_bounded():
+    response = client.post("/api/demo/analyze", json={
+        "text": "Bitte vereinbaren Sie einen Wartungstermin für unsere Heizungsanlage."
+    })
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["intent"] == "Service / Wartung"
+    assert payload["stored"] is False
+    assert payload["mode"] == "regelbasierte_demo"
+    assert client.get("/api/leads", headers=HEADERS).json() == []
+    assert client.get("/api/approvals", headers=HEADERS).json() == []
+
+def test_public_demo_rejects_oversized_input():
+    response = client.post("/api/demo/analyze", json={"text": "x" * 3001})
+    assert response.status_code == 422
