@@ -1,18 +1,24 @@
-import os
+import os, hmac, json
 from datetime import datetime, timezone
 from typing import Generator, Optional
 
-from fastapi import Depends, FastAPI, Header, HTTPException, status
+from fastapi import Depends, FastAPI, Header, HTTPException, Request, status
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import RedirectResponse
+from fastapi.staticfiles import StaticFiles
+from starlette.middleware.sessions import SessionMiddleware
 from pydantic import BaseModel, Field
-from sqlalchemy import DateTime, ForeignKey, String, Text, create_engine, select
+from sqlalchemy import DateTime, String, Text, create_engine, select, UniqueConstraint
 from sqlalchemy.orm import DeclarativeBase, Mapped, Session, mapped_column, sessionmaker
 
-API_TOKEN = os.getenv("HERMES_API_TOKEN", "")
 TENANT_ID = os.getenv("HERMES_TENANT_ID", "")
 DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./hermes-dev.db")
-if not API_TOKEN or not TENANT_ID:
-    raise RuntimeError("Set HERMES_API_TOKEN and HERMES_TENANT_ID before starting the API.")
+SESSION_SECRET = os.getenv("HERMES_SESSION_SECRET", "")
+ADMIN_USER = os.getenv("HERMES_ADMIN_USER", "")
+ADMIN_PASSWORD = os.getenv("HERMES_ADMIN_PASSWORD", "")
+API_TOKEN = os.getenv("HERMES_API_TOKEN", "")
+if not all([TENANT_ID, SESSION_SECRET, ADMIN_USER, ADMIN_PASSWORD]):
+    raise RuntimeError("Set HERMES_TENANT_ID, HERMES_SESSION_SECRET, HERMES_ADMIN_USER and HERMES_ADMIN_PASSWORD.")
 
 connect_args = {"check_same_thread": False} if DATABASE_URL.startswith("sqlite") else {}
 engine = create_engine(DATABASE_URL, connect_args=connect_args, pool_pre_ping=True)
@@ -66,26 +72,49 @@ class AuditLog(Base):
     details: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
 
-Base.metadata.create_all(bind=engine)
-app = FastAPI(title="HERMES Command Center API", version="0.1.0")
+class WorkspaceState(Base):
+    __tablename__ = "workspace_state"
+    __table_args__ = (UniqueConstraint("tenant_id", name="uq_workspace_tenant"),)
+    id: Mapped[int] = mapped_column(primary_key=True)
+    tenant_id: Mapped[str] = mapped_column(String(80), index=True)
+    payload: Mapped[str] = mapped_column(Text)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
 
-allowed_origins = [x.strip() for x in os.getenv("HERMES_ALLOWED_ORIGINS", "").split(",") if x.strip()]
-if allowed_origins:
-    app.add_middleware(CORSMiddleware, allow_origins=allowed_origins, allow_credentials=False,
-                       allow_methods=["GET", "POST", "PATCH"], allow_headers=["Authorization", "Content-Type"])
+Base.metadata.create_all(bind=engine)
+app = FastAPI(title="HERMES Command Center", version="0.2.0")
+app.add_middleware(SessionMiddleware, secret_key=SESSION_SECRET, session_cookie="hermes_session",
+                   same_site="lax", https_only=os.getenv("HERMES_COOKIE_SECURE", "true").lower() == "true",
+                   max_age=60 * 60 * 8)
+
+@app.middleware("http")
+async def same_origin_mutations(request: Request, call_next):
+    if request.method in {"POST", "PUT", "PATCH", "DELETE"}:
+        origin = request.headers.get("origin")
+        if origin:
+            expected = f"{request.url.scheme}://{request.url.netloc}"
+            if origin.rstrip("/") != expected.rstrip("/"):
+                from fastapi.responses import JSONResponse
+                return JSONResponse({"detail": "Cross-origin request blocked"}, status_code=403)
+    return await call_next(request)
 
 def db_session() -> Generator[Session, None, None]:
     with SessionLocal() as session:
         yield session
 
-def authenticate(authorization: str = Header(default="")) -> str:
+def authenticate(request: Request, authorization: str = Header(default="")) -> str:
+    if request.session.get("authenticated") is True:
+        return TENANT_ID
     scheme, _, token = authorization.partition(" ")
-    if scheme.lower() != "bearer" or not token:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Bearer token required")
-    import hmac
-    if not hmac.compare_digest(token, API_TOKEN):
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
-    return TENANT_ID
+    if API_TOKEN and scheme.lower() == "bearer" and hmac.compare_digest(token, API_TOKEN):
+        return TENANT_ID
+    raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Login required")
+
+class LoginIn(BaseModel):
+    username: str = Field(min_length=1, max_length=120)
+    password: str = Field(min_length=1, max_length=500)
+
+class WorkspaceIn(BaseModel):
+    data: dict
 
 class LeadIn(BaseModel):
     company: str = Field(min_length=1, max_length=180)
@@ -116,7 +145,51 @@ def audit(db: Session, tenant: str, actor: str, action: str, kind: str, entity_i
 
 @app.get("/health")
 def health():
-    return {"status": "ok", "service": "hermes-api"}
+    return {"status": "ok", "service": "hermes-command-center"}
+
+@app.post("/api/login")
+def login(body: LoginIn, request: Request):
+    if not hmac.compare_digest(body.username, ADMIN_USER) or not hmac.compare_digest(body.password, ADMIN_PASSWORD):
+        raise HTTPException(status_code=401, detail="Benutzername oder Passwort falsch")
+    request.session.clear()
+    request.session.update({"authenticated": True, "actor": body.username})
+    return {"authenticated": True, "user": body.username}
+
+@app.get("/api/session")
+def session_status(request: Request):
+    if request.session.get("authenticated") is not True:
+        raise HTTPException(status_code=401, detail="Login required")
+    return {"authenticated": True, "user": request.session.get("actor", "Admin")}
+
+@app.post("/api/logout")
+def logout(request: Request):
+    request.session.clear()
+    return {"ok": True}
+
+@app.get("/api/workspace")
+def get_workspace(tenant: str = Depends(authenticate), db: Session = Depends(db_session)):
+    row = db.scalar(select(WorkspaceState).where(WorkspaceState.tenant_id == tenant))
+    return {"data": json.loads(row.payload) if row else None,
+            "updated_at": row.updated_at.isoformat() if row else None}
+
+@app.put("/api/workspace")
+def put_workspace(body: WorkspaceIn, request: Request, tenant: str = Depends(authenticate), db: Session = Depends(db_session)):
+    encoded = json.dumps(body.data, ensure_ascii=False, separators=(",", ":"))
+    if len(encoded.encode("utf-8")) > 1_000_000:
+        raise HTTPException(status_code=413, detail="Workspace is larger than 1 MB")
+    required = {"leads", "tasks", "approvals", "agents", "workflows", "logs"}
+    if not required.issubset(body.data) or any(not isinstance(body.data[k], list) for k in required):
+        raise HTTPException(status_code=422, detail="Invalid workspace structure")
+    row = db.scalar(select(WorkspaceState).where(WorkspaceState.tenant_id == tenant))
+    if row is None:
+        row = WorkspaceState(tenant_id=tenant, payload=encoded)
+        db.add(row)
+    else:
+        row.payload = encoded
+        row.updated_at = datetime.now(timezone.utc)
+    audit(db, tenant, request.session.get("actor", "service-token"), "workspace.saved", "workspace", row.id, "Workspace snapshot saved")
+    db.commit()
+    return {"ok": True, "updated_at": row.updated_at.isoformat()}
 
 @app.get("/api/leads")
 def list_leads(tenant: str = Depends(authenticate), db: Session = Depends(db_session)):
@@ -125,11 +198,9 @@ def list_leads(tenant: str = Depends(authenticate), db: Session = Depends(db_ses
 @app.post("/api/leads", status_code=201)
 def create_lead(body: LeadIn, tenant: str = Depends(authenticate), db: Session = Depends(db_session)):
     item = Lead(tenant_id=tenant, **body.model_dump())
-    db.add(item)
-    db.flush()
+    db.add(item); db.flush()
     audit(db, tenant, "api-token", "lead.created", "lead", item.id, item.company)
-    db.commit()
-    db.refresh(item)
+    db.commit(); db.refresh(item)
     return item
 
 @app.get("/api/tasks")
@@ -139,11 +210,9 @@ def list_tasks(tenant: str = Depends(authenticate), db: Session = Depends(db_ses
 @app.post("/api/tasks", status_code=201)
 def create_task(body: TaskIn, tenant: str = Depends(authenticate), db: Session = Depends(db_session)):
     item = WorkTask(tenant_id=tenant, **body.model_dump())
-    db.add(item)
-    db.flush()
+    db.add(item); db.flush()
     audit(db, tenant, "api-token", "task.created", "task", item.id, item.title)
-    db.commit()
-    db.refresh(item)
+    db.commit(); db.refresh(item)
     return item
 
 @app.get("/api/approvals")
@@ -153,11 +222,9 @@ def list_approvals(tenant: str = Depends(authenticate), db: Session = Depends(db
 @app.post("/api/approvals", status_code=201)
 def create_approval(body: ApprovalIn, tenant: str = Depends(authenticate), db: Session = Depends(db_session)):
     item = Approval(tenant_id=tenant, title=body.title, payload=body.payload)
-    db.add(item)
-    db.flush()
+    db.add(item); db.flush()
     audit(db, tenant, "api-token", "approval.created", "approval", item.id, item.title)
-    db.commit()
-    db.refresh(item)
+    db.commit(); db.refresh(item)
     return item
 
 @app.post("/api/approvals/{approval_id}/decision")
@@ -167,15 +234,14 @@ def decide_approval(approval_id: int, body: DecisionIn, tenant: str = Depends(au
         raise HTTPException(status_code=404, detail="Approval not found")
     if item.status != "pending":
         raise HTTPException(status_code=409, detail="Approval has already been decided")
-    item.status = body.decision
-    item.decided_by = body.actor
-    item.decision_note = body.note
+    item.status = body.decision; item.decided_by = body.actor; item.decision_note = body.note
     item.decided_at = datetime.now(timezone.utc)
     audit(db, tenant, body.actor, f"approval.{body.decision}", "approval", item.id, body.note or "")
-    db.commit()
-    db.refresh(item)
+    db.commit(); db.refresh(item)
     return item
 
 @app.get("/api/audit")
 def list_audit(tenant: str = Depends(authenticate), db: Session = Depends(db_session)):
     return db.scalars(select(AuditLog).where(AuditLog.tenant_id == tenant).order_by(AuditLog.id.desc()).limit(500)).all()
+
+app.mount("/", StaticFiles(directory=os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "command-center")), html=True), name="dashboard")
