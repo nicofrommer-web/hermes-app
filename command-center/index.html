@@ -46,7 +46,6 @@
 </div>
 <div id="modalRoot"></div>
 <script>
-const KEY='hermes_command_center_v1';
 const initial={
  leads:[
   {id:'D-1001',name:'Beispielbetrieb Nord',industry:'Handwerk',city:'Villingen-Schwenningen',website:'',contact:'',status:'Neu',priority:'Hoch',need:'Eingehende Serviceanfragen sortieren und fehlende Angaben erfassen.',notes:'Synthetischer Beispieldatensatz – kein reales Unternehmen.',created:'2026-11-18'},
@@ -77,9 +76,15 @@ const initial={
  ],
  logs:[{time:'2026-11-18 10:00',actor:'System',action:'Demo-Arbeitsbereich initialisiert',detail:'Synthetische Testdaten geladen.'}]
 };
-let db=load();
-function load(){try{const v=JSON.parse(localStorage.getItem(KEY));if(v&&v.leads&&v.tasks)return v}catch(e){}return structuredClone(initial)}
-function save(){localStorage.setItem(KEY,JSON.stringify(db));render()}
+let db=structuredClone(initial);
+async function save(){
+ try{
+  const response=await fetch('/api/workspace',{method:'PUT',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify({data:db})});
+  if(response.status===401){location.href='/login.html';return}
+  if(!response.ok)throw new Error('Speichern fehlgeschlagen ('+response.status+')');
+  render();
+ }catch(error){alert('Daten konnten nicht gespeichert werden. Bitte Verbindung prüfen. '+error.message)}
+}
 function log(actor,action,detail){db.logs.unshift({time:new Date().toLocaleString('de-DE'),actor,action,detail});db.logs=db.logs.slice(0,200)}
 const $=s=>document.querySelector(s);
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -99,7 +104,7 @@ function render(){
  const pending=db.approvals.filter(a=>a.status==='Wartet').length;
  if(current==='overview'){
   root.innerHTML=head('Guten Tag.','Hier laufen deine Leads, Agenten und Geschäftsprozesse zusammen.',btn('＋ Lead hinzufügen','newLead',true)+btn('＋ Aufgabe','newTask'))+
-  '<div class="notice"><b>Demo-Modus:</b> Alle Datensätze sind synthetische Beispiele. Änderungen bleiben lokal in diesem Browser. Agenten führen keine echten externen Aktionen aus.</div>'+
+  '<div class="notice"><b>Demo-Modus:</b> Beispieldaten sind synthetisch. Änderungen werden serverseitig im HERMES-Arbeitsbereich gespeichert. Agenten führen noch keine echten externen Aktionen aus.</div>'+
   '<div class="grid stats">'+stat('Leads gesamt',db.leads.length,'CRM-Datensätze')+stat('Offene Aufgaben',count(db.tasks,'Offen')+count(db.tasks,'In Arbeit'),'Interne Arbeitspakete')+stat('Freigaben ausstehend',pending,'Menschliche Entscheidung erforderlich')+stat('Agenten aktiviert',db.agents.filter(a=>a.enabled).length,'Konfigurationsstatus')+'</div>'+
   '<div class="grid twocol"><section class="card"><div class="cardhead"><h2>Pipeline-Aktivität</h2>'+badge('Live aus lokalem Datensatz','green')+'</div><div class="list">'+['Neu','In Prüfung','Qualifiziert','Kunde','Archiviert'].map(s=>'<div class="item"><span>'+s+'</span><b>'+db.leads.filter(l=>l.status===s).length+'</b></div>').join('')+'</div></section><section class="card"><div class="cardhead"><h2>Freigabecenter</h2>'+badge(pending+' wartend',pending?'gold':'green')+'</div>'+ (pending?db.approvals.filter(a=>a.status==='Wartet').map(a=>'<div class="item"><div><div class="itemtitle">'+esc(a.title)+'</div><div class="itemdesc">'+esc(a.kind)+' · '+esc(a.requester)+'</div></div>'+btn('Prüfen','gotoApprovals')+'</div>').join(''):'<div class="empty">Keine offenen Freigaben.</div>')+'</section></div>'+
   '<section class="card" style="margin-top:14px"><div class="cardhead"><h2>Zuletzt bearbeitet</h2>'+btn('Alle Aufgaben','gotoTasks')+'</div>'+taskRows(db.tasks.slice(0,4))+'</section>';
@@ -134,7 +139,7 @@ function render(){
   '<section class="card"><div class="timeline">'+db.logs.map(l=>'<div class="event"><b>'+esc(l.action)+'</b><p>'+esc(l.time)+' · '+esc(l.actor)+'</p><p>'+esc(l.detail)+'</p></div>').join('')+'</div></section>';
  }else if(current==='settings'){
   root.innerHTML=head('Einstellungen','Arbeitsbereich, Datenspeicherung und Sicherheitsgrenzen.')+
-  '<div class="grid twocol"><section class="card"><h2>Arbeitsbereich</h2><div class="item"><span class="muted">Produkt</span><b>HERMES Command Center</b></div><div class="item"><span class="muted">Modus</span>'+badge('Lokale Demo','gold')+'</div><div class="item"><span class="muted">Speicher</span><b>Browser LocalStorage</b></div><div class="item"><span class="muted">Backend / Datenbank</span><b>Nicht verbunden</b></div><div class="item"><span class="muted">Authentifizierung</span><b>Nicht eingerichtet</b></div></section><section class="card"><h2>Sicherheit & Datenschutz</h2><div class="list">'+['Keine echten Kundendaten in der Demo speichern','Keine API-Schlüssel im Browser hinterlegen','Externe Aktionen manuell freigeben','Vor Produktivbetrieb Authentifizierung und Rollen einrichten'].map(x=>'<div class="item">'+x+'</div>').join('')+'</div></section></div><section class="card" style="margin-top:14px"><h2>Datenverwaltung</h2><p class="muted small">Exportiere deine Daten oder setze die lokalen Beispieldaten zurück. Das Zurücksetzen betrifft nur diesen Browser.</p><div class="actions" style="margin-top:14px">'+btn('Gesamtdaten exportieren','exportAll')+btn('Demo zurücksetzen','resetDemo')+'</div></section>';
+  '<div class="grid twocol"><section class="card"><h2>Arbeitsbereich</h2><div class="item"><span class="muted">Produkt</span><b>HERMES Command Center</b></div><div class="item"><span class="muted">Modus</span>'+badge('Lokale Demo','gold')+'</div><div class="item"><span class="muted">Speicher</span><b>HERMES-Datenbank</b></div><div class="item"><span class="muted">Backend / Datenbank</span><b>Verbunden (Workspace-API)</b></div><div class="item"><span class="muted">Authentifizierung</span><b>Admin-Login aktiv</b></div></section><section class="card"><h2>Sicherheit & Datenschutz</h2><div class="list">'+['Keine echten Kundendaten in der Demo speichern','Keine API-Schlüssel im Browser hinterlegen','Externe Aktionen manuell freigeben','Vor Produktivbetrieb Authentifizierung und Rollen einrichten'].map(x=>'<div class="item">'+x+'</div>').join('')+'</div></section></div><section class="card" style="margin-top:14px"><h2>Datenverwaltung</h2><p class="muted small">Exportiere deine Daten oder setze die lokalen Beispieldaten zurück. Das Zurücksetzen betrifft den gespeicherten HERMES-Arbeitsbereich.</p><div class="actions" style="margin-top:14px">'+btn('Gesamtdaten exportieren','exportAll')+btn('Demo zurücksetzen','resetDemo')+'</div></section>';
  }
  bindView();
 }
@@ -162,7 +167,7 @@ function action(a){
  else if(a==='exportLogs')exportCSV('hermes-audit.csv',[['Zeit','Akteur','Aktion','Details'],...db.logs.map(l=>[l.time,l.actor,l.action,l.detail])]);
  else if(a==='exportWorkflows')exportCSV('hermes-workflows.csv',[['ID','Workflow','Beschreibung','Aktiv'],...db.workflows.map(w=>[w.id,w.name,w.desc,w.enabled])]);
  else if(a==='exportAll')exportCSV('hermes-backup.csv',[['Typ','Datensatz'],...Object.entries(db).flatMap(([k,v])=>v.map(x=>[k,JSON.stringify(x)]))]);
- else if(a==='resetDemo'){if(confirm('Alle lokalen Änderungen löschen und synthetische Beispieldaten wiederherstellen?')){db=structuredClone(initial);log('Nutzer','Demo zurückgesetzt','Lokale Daten wurden auf den Startstand gesetzt.');save()}}
+ else if(a==='resetDemo'){if(confirm('Alle lokalen Änderungen löschen und synthetische Beispieldaten wiederherstellen?')){db=structuredClone(initial);log('Nutzer','Demo zurückgesetzt','Der gespeicherte Arbeitsbereich wurde auf den Demo-Startstand gesetzt.');save()}}
  else if(a.startsWith('approve:')||a.startsWith('reject:')){let [op,id]=a.split(':');let x=db.approvals.find(v=>v.id===id);if(x&&x.status==='Wartet'){x.status=op==='approve'?'Freigegeben':'Abgelehnt';log('Nutzer',op==='approve'?'Freigabe dokumentiert':'Freigabe abgelehnt',x.title);save()}}
 }
 function go(v){current=v;$('#sidebar').classList.remove('open');render()}
@@ -175,6 +180,21 @@ document.addEventListener('click',e=>{
  let te=e.target.closest('[data-edittask]');if(te){newTask(db.tasks.find(x=>x.id===te.dataset.edittask));return}
 });
 $('#menuBtn').onclick=()=>$('#sidebar').classList.toggle('open');
-render();
+async function bootstrap(){
+ try{
+  const session=await fetch('/api/session',{credentials:'same-origin'});
+  if(!session.ok){location.href='/login.html';return}
+  const response=await fetch('/api/workspace',{credentials:'same-origin'});
+  if(!response.ok)throw new Error('Workspace konnte nicht geladen werden.');
+  const result=await response.json();
+  if(result.data)db=result.data;
+  else{
+   const saved=await fetch('/api/workspace',{method:'PUT',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify({data:db})});
+   if(!saved.ok)throw new Error('Initialer Workspace konnte nicht gespeichert werden.');
+  }
+  render();
+ }catch(error){document.querySelector('#viewRoot').innerHTML='<section class="card"><h2>Verbindung fehlgeschlagen</h2><p>'+esc(error.message)+'</p><p>Bitte Seite neu laden oder den Administrator kontaktieren.</p></section>'}
+}
+bootstrap();
 </script>
 </body></html>
