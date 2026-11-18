@@ -8,7 +8,7 @@ from fastapi.responses import RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from starlette.middleware.sessions import SessionMiddleware
 from pydantic import BaseModel, Field
-from sqlalchemy import DateTime, String, Text, create_engine, select, UniqueConstraint
+from sqlalchemy import DateTime, String, Text, create_engine, select, UniqueConstraint, text as sql_text
 from sqlalchemy.orm import DeclarativeBase, Mapped, Session, mapped_column, sessionmaker
 
 TENANT_ID = os.getenv("HERMES_TENANT_ID", "")
@@ -145,7 +145,13 @@ def audit(db: Session, tenant: str, actor: str, action: str, kind: str, entity_i
 
 @app.get("/health")
 def health():
-    return {"status": "ok", "service": "hermes-command-center"}
+    """Readiness check for the API process and its database."""
+    try:
+        with engine.connect() as connection:
+            connection.execute(sql_text("SELECT 1"))
+    except Exception:
+        raise HTTPException(status_code=503, detail="Database unavailable")
+    return {"status": "ok", "service": "hermes-command-center", "database": "ok"}
 
 @app.post("/api/login")
 def login(body: LoginIn, request: Request):
