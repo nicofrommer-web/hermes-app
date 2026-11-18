@@ -1,4 +1,6 @@
-import os, hmac, json
+import os, hmac, json, time
+from collections import defaultdict, deque
+from threading import Lock
 from datetime import datetime, timezone
 from typing import Generator, Optional
 
@@ -109,6 +111,9 @@ def authenticate(request: Request, authorization: str = Header(default="")) -> s
         return TENANT_ID
     raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Login required")
 
+class DemoAnalyzeIn(BaseModel):
+    text: str = Field(min_length=8, max_length=3000)
+
 class LoginIn(BaseModel):
     username: str = Field(min_length=1, max_length=120)
     password: str = Field(min_length=1, max_length=500)
@@ -142,6 +147,67 @@ class DecisionIn(BaseModel):
 def audit(db: Session, tenant: str, actor: str, action: str, kind: str, entity_id: Optional[int], details: str = "") -> None:
     db.add(AuditLog(tenant_id=tenant, actor=actor, action=action, entity_type=kind,
                     entity_id=str(entity_id) if entity_id is not None else None, details=details[:4000]))
+
+
+# Public demo endpoint: stateless, bounded, and deliberately not connected to tenant data.
+_demo_hits = defaultdict(deque)
+_demo_lock = Lock()
+_DEMO_WINDOW_SECONDS = 60
+_DEMO_MAX_REQUESTS = 20
+
+@app.post("/api/demo/analyze")
+def analyze_demo(body: DemoAnalyzeIn, request: Request):
+    client_ip = request.client.host if request.client else "unknown"
+    now = time.monotonic()
+    with _demo_lock:
+        hits = _demo_hits[client_ip]
+        while hits and now - hits[0] > _DEMO_WINDOW_SECONDS:
+            hits.popleft()
+        if len(hits) >= _DEMO_MAX_REQUESTS:
+            raise HTTPException(status_code=429, detail="Demo-Limit erreicht. Bitte warte kurz und versuche es erneut.")
+        hits.append(now)
+
+    content = body.text.casefold()
+    def has(*terms: str) -> bool:
+        return any(term in content for term in terms)
+
+    if has("wartung", "service", "reparatur", "heizung", "anlage", "störung"):
+        intent = "Service / Wartung"
+    elif has("angebot", "preis", "kosten", "kalkulation"):
+        intent = "Angebotsanfrage"
+    elif has("termin", "terminvorschlag", "besprechung"):
+        intent = "Terminabstimmung"
+    else:
+        intent = "Allgemeine Kundenanfrage"
+
+    fields = []
+    if has("villingen", "stadt", "ort", "straße", "strasse", "plz"):
+        fields.append("Ortsangabe")
+    if has("telefon", "nummer", "mobil"):
+        fields.append("Telefonhinweis")
+    if "@" in content:
+        fields.append("E-Mail-Hinweis")
+    if has("anlage", "modell", "baujahr", "gerät", "geraet", "2018"):
+        fields.append("Anlagen-/Modellhinweis")
+    if has("termin", "zeitfenster", "datum", "uhr"):
+        fields.append("Terminwunsch")
+
+    missing = []
+    if not has("telefon", "nummer", "mobil", "@"):
+        missing.append("Kontaktweg")
+    if not has("termin", "zeitfenster", "datum", "uhr"):
+        missing.append("gewünschtes Zeitfenster")
+
+    urgency = "Dringlichkeit manuell prüfen" if has("dringend", "notfall", "ausfall", "störung", "stoerung") else "Keine Dringlichkeit erkannt — manuell prüfen"
+    return {
+        "intent": intent,
+        "priority": urgency,
+        "fields": fields,
+        "missing": missing,
+        "next_step": "Mitarbeiter prüft die Angaben und entscheidet über eine Rückfrage oder den nächsten Schritt.",
+        "mode": "regelbasierte_demo",
+        "stored": False,
+    }
 
 @app.get("/health")
 def health():
@@ -244,4 +310,5 @@ def decide_approval(approval_id: int, body: DecisionIn, tenant: str = Depends(au
 def list_audit(tenant: str = Depends(authenticate), db: Session = Depends(db_session)):
     return db.scalars(select(AuditLog).where(AuditLog.tenant_id == tenant).order_by(AuditLog.id.desc()).limit(500)).all()
 
+app.mount("/website", StaticFiles(directory=os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "website")), html=True), name="website")
 app.mount("/", StaticFiles(directory=os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "command-center")), html=True), name="dashboard")

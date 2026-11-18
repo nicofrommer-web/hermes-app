@@ -28,7 +28,7 @@ Set the environment values from `backend/.env.example` in your shell (or use you
 uvicorn backend.app:app --reload
 ```
 
-Open `http://127.0.0.1:8000`. Sign in with `HERMES_ADMIN_USER` and `HERMES_ADMIN_PASSWORD`. The first start creates clearly labeled synthetic demo records in the database.
+Open `http://127.0.0.1:8000`. Sign in with `HERMES_ADMIN_USER` and `HERMES_ADMIN_PASSWORD`. The first start creates clearly labeled synthetic demo records in the database. The public demo page is available at `/website/`; its analysis endpoint is deliberately separate from tenant data and does not create leads, tasks, or approvals.
 
 ## Deploy as one container
 
