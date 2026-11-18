@@ -1,4 +1,12 @@
 import os
+import sys
+from pathlib import Path
+
+# Ensure the backend directory is importable when pytest collects tests
+# from backend/tests in GitHub Actions or other runners.
+BACKEND_DIR = Path(__file__).resolve().parents[1]
+if str(BACKEND_DIR) not in sys.path:
+    sys.path.insert(0, str(BACKEND_DIR))
 os.environ["HERMES_API_TOKEN"] = "test-secret-token"
 os.environ["HERMES_TENANT_ID"] = "test-tenant"
 os.environ["HERMES_SESSION_SECRET"] = "test-session-secret-that-is-long-enough"
