@@ -244,4 +244,4 @@ def decide_approval(approval_id: int, body: DecisionIn, tenant: str = Depends(au
 def list_audit(tenant: str = Depends(authenticate), db: Session = Depends(db_session)):
     return db.scalars(select(AuditLog).where(AuditLog.tenant_id == tenant).order_by(AuditLog.id.desc()).limit(500)).all()
 
-app.mount("/", StaticFiles(directory="command-center", html=True), name="dashboard")
+app.mount("/", StaticFiles(directory=os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "command-center")), html=True), name="dashboard")
