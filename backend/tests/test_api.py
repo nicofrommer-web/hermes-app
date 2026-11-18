@@ -90,3 +90,16 @@ def test_public_demo_analysis_is_stateless_and_bounded():
 def test_public_demo_rejects_oversized_input():
     response = client.post("/api/demo/analyze", json={"text": "x" * 3001})
     assert response.status_code == 422
+
+
+def test_ai_analysis_requires_authentication():
+    response = client.post("/api/ai/analyze", json={"text": "Bitte prüfen Sie diese Serviceanfrage."})
+    assert response.status_code == 401
+
+
+def test_ai_analysis_requires_server_side_configuration(monkeypatch):
+    monkeypatch.delenv("OPENAI_API_KEY", raising=False)
+    monkeypatch.delenv("HERMES_OPENAI_MODEL", raising=False)
+    response = client.post("/api/ai/analyze", headers=HEADERS, json={"text": "Bitte prüfen Sie diese Serviceanfrage."})
+    assert response.status_code == 503
+    assert client.get("/api/workspace", headers=HEADERS).json()["data"] is None

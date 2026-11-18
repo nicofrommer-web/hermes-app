@@ -103,7 +103,7 @@ function render(){
  const root=$('#viewRoot');
  const pending=db.approvals.filter(a=>a.status==='Wartet').length;
  if(current==='overview'){
-  root.innerHTML=head('Guten Tag.','Hier laufen deine Leads, Agenten und Geschäftsprozesse zusammen.',btn('＋ Lead hinzufügen','newLead',true)+btn('＋ Aufgabe','newTask'))+
+  root.innerHTML=head('Guten Tag.','Hier laufen deine Leads, Agenten und Geschäftsprozesse zusammen.',btn('＋ Lead hinzufügen','newLead',true)+btn('＋ Aufgabe','newTask')+btn('KI-Anfrage analysieren','aiAnalyze'))+
   '<div class="notice"><b>Demo-Modus:</b> Beispieldaten sind synthetisch. Änderungen werden serverseitig im HERMES-Arbeitsbereich gespeichert. Agenten führen noch keine echten externen Aktionen aus.</div>'+
   '<div class="grid stats">'+stat('Leads gesamt',db.leads.length,'CRM-Datensätze')+stat('Offene Aufgaben',count(db.tasks,'Offen')+count(db.tasks,'In Arbeit'),'Interne Arbeitspakete')+stat('Freigaben ausstehend',pending,'Menschliche Entscheidung erforderlich')+stat('Agenten aktiviert',db.agents.filter(a=>a.enabled).length,'Konfigurationsstatus')+'</div>'+
   '<div class="grid twocol"><section class="card"><div class="cardhead"><h2>Pipeline-Aktivität</h2>'+badge('Live aus lokalem Datensatz','green')+'</div><div class="list">'+['Neu','In Prüfung','Qualifiziert','Kunde','Archiviert'].map(s=>'<div class="item"><span>'+s+'</span><b>'+db.leads.filter(l=>l.status===s).length+'</b></div>').join('')+'</div></section><section class="card"><div class="cardhead"><h2>Freigabecenter</h2>'+badge(pending+' wartend',pending?'gold':'green')+'</div>'+ (pending?db.approvals.filter(a=>a.status==='Wartet').map(a=>'<div class="item"><div><div class="itemtitle">'+esc(a.title)+'</div><div class="itemdesc">'+esc(a.kind)+' · '+esc(a.requester)+'</div></div>'+btn('Prüfen','gotoApprovals')+'</div>').join(''):'<div class="empty">Keine offenen Freigaben.</div>')+'</section></div>'+
@@ -129,7 +129,7 @@ function render(){
  }else if(current==='approvals'){
   root.innerHTML=head('Freigabecenter','Externe oder geschäftskritische Aktionen bleiben bis zur menschlichen Bestätigung gesperrt.')+
   '<div class="notice">Eine Freigabe dokumentiert nur die Entscheidung im Demo-System. Es wird dadurch keine E-Mail versendet, kein Angebot zugestellt und keine externe Aktion ausgeführt.</div>'+
-  (db.approvals.length?'<div class="grid">'+db.approvals.map(a=>'<section class="card"><div class="cardhead"><div><div class="eyebrow">'+esc(a.kind)+' · '+esc(a.id)+'</div><h2 style="margin-top:5px">'+esc(a.title)+'</h2></div>'+badge(a.status,a.status==='Wartet'?'gold':a.status==='Freigegeben'?'green':'red')+'</div><p class="muted small">'+esc(a.detail)+'</p><div class="item"><span class="muted">Angelegt von</span><b>'+esc(a.requester)+'</b></div>'+(a.status==='Wartet'?'<div class="actions" style="margin-top:14px">'+btn('Ablehnen','reject:'+a.id)+btn('Freigabe dokumentieren','approve:'+a.id,true)+'</div>':'')+'</section>').join('')+'</div>':'<div class="card empty">Keine Freigabeanfragen vorhanden.</div>');
+  (db.approvals.length?'<div class="grid">'+db.approvals.map(a=>'<section class="card"><div class="cardhead"><div><div class="eyebrow">'+esc(a.kind)+' · '+esc(a.id)+'</div><h2 style="margin-top:5px">'+esc(a.title)+'</h2></div>'+badge(a.status,a.status==='Wartet'?'gold':a.status==='Freigegeben'?'green':'red')+'</div><p class="muted small">'+esc(a.detail)+'</p>'+(a.analysis?'<div class="list">'+[['Kategorie',a.analysis.category],['Priorität',a.analysis.priority],['Bekannte Angaben',(a.analysis.known_information||[]).join(' · ')||'Keine erkannt'],['Fehlende Angaben',(a.analysis.missing_information||[]).join(' · ')||'Keine erkannt'],['Nächster Schritt',a.analysis.recommended_next_step],['Einschätzung',a.analysis.confidence]].map(x=>'<div class="item"><span class="muted">'+esc(x[0])+'</span><b>'+esc(x[1])+'</b></div>').join('')+'</div>':'')+'<div class="item"><span class="muted">Angelegt von</span><b>'+esc(a.requester)+'</b></div>'+(a.status==='Wartet'?'<div class="actions" style="margin-top:14px">'+btn('Ablehnen','reject:'+a.id)+btn('Freigabe dokumentieren','approve:'+a.id,true)+'</div>':'')+'</section>').join('')+'</div>':'<div class="card empty">Keine Freigabeanfragen vorhanden.</div>');
  }else if(current==='analytics'){
   const total=db.leads.length||1,qualified=db.leads.filter(l=>['Qualifiziert','Kunde'].includes(l.status)).length;
   root.innerHTML=head('Analytics','Einfache Kennzahlen aus den aktuell lokal gespeicherten Daten.',btn('Bericht als CSV','exportLeads'))+
@@ -151,6 +151,25 @@ function bindView(){
 }
 function modal(title,body,submitLabel,callback){$('#modalRoot').innerHTML='<div class="modalback" id="modalback"><div class="modal"><div class="modalhead"><h2>'+title+'</h2><button class="close" id="modalClose">×</button></div>'+body+'<div class="modalfoot"><button class="btn" id="modalCancel">Abbrechen</button><button class="btn primary" id="modalSubmit">'+submitLabel+'</button></div></div></div>';$('#modalClose').onclick=closeModal;$('#modalCancel').onclick=closeModal;$('#modalback').onclick=e=>{if(e.target.id==='modalback')closeModal()};$('#modalSubmit').onclick=callback}
 function closeModal(){$('#modalRoot').innerHTML=''}
+function aiAnalyze(){
+ modal('KI-Anfrage analysieren',
+ '<div class="notice">Nur synthetische Testanfragen eingeben. Der Text wird an den konfigurierten KI-Anbieter übertragen, von HERMES aber nicht als Originalanfrage gespeichert. Das Ergebnis wird als Entwurf im Freigabecenter abgelegt. Es wird nichts versendet.</div><label style="display:grid;gap:7px;color:var(--muted);font-size:11px">Beispielanfrage<textarea class="field" id="aiRequest" rows="7" placeholder="Beschreibe eine Anfrage ohne echte Namen, Kontaktdaten oder vertrauliche Informationen."></textarea></label><div id="aiResult" class="muted small" style="margin-top:12px"></div>',
+ 'Analysieren & Entwurf erstellen',
+ async ()=>{
+  const text=$('#aiRequest').value.trim();
+  if(text.length<8){alert('Bitte mindestens 8 Zeichen eingeben.');return}
+  const submit=$('#modalSubmit');submit.disabled=true;submit.textContent='Analyse läuft …';
+  try{
+   const response=await fetch('/api/ai/analyze',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify({text})});
+   const payload=await response.json();
+   if(!response.ok)throw new Error(payload.detail||'Analyse fehlgeschlagen');
+   const workspace=await fetch('/api/workspace',{credentials:'same-origin'});
+   if(!workspace.ok)throw new Error('Freigabeentwurf wurde angelegt, Workspace konnte aber nicht neu geladen werden.');
+   const result=await workspace.json();if(result.data)db=result.data;
+   closeModal();go('approvals');
+  }catch(error){$('#aiResult').textContent=error.message;submit.disabled=false;submit.textContent='Erneut versuchen'}
+ });
+}
 function newLead(existing){
  let l=existing||{name:'',industry:'',city:'',website:'',contact:'',status:'Neu',priority:'Mittel',need:'',notes:''};
  modal(existing?'Lead bearbeiten':'Neuen Lead anlegen','<div class="formgrid"><label>Firmenname<input class="field" id="fName" value="'+esc(l.name)+'" required></label><label>Branche<input class="field" id="fIndustry" value="'+esc(l.industry)+'"></label><label>Ort<input class="field" id="fCity" value="'+esc(l.city)+'"></label><label>Website<input class="field" id="fWebsite" value="'+esc(l.website)+'" placeholder="https://"></label><label>Geschäftlicher Kontakt<input class="field" id="fContact" value="'+esc(l.contact)+'"></label><label>Status<select class="field" id="fStatus">'+['Neu','In Prüfung','Qualifiziert','Kunde','Archiviert'].map(s=>'<option '+(l.status===s?'selected':'')+'>'+s+'</option>').join('')+'</select></label><label>Priorität<select class="field" id="fPriority">'+['Hoch','Mittel','Niedrig'].map(s=>'<option '+(l.priority===s?'selected':'')+'>'+s+'</option>').join('')+'</select></label><label class="wide">Automatisierungspotenzial<textarea class="field" id="fNeed">'+esc(l.need)+'</textarea></label><label class="wide">Notizen / Quellenhinweise<textarea class="field" id="fNotes">'+esc(l.notes)+'</textarea></label></div>',existing?'Speichern':'Lead anlegen',()=>{let name=$('#fName').value.trim();if(!name){alert('Bitte einen Firmennamen eingeben.');return}let obj={...l,id:existing.id||'L-'+Date.now(),name,industry:$('#fIndustry').value,city:$('#fCity').value,website:$('#fWebsite').value,contact:$('#fContact').value,status:$('#fStatus').value,priority:$('#fPriority').value,need:$('#fNeed').value,notes:$('#fNotes').value,created:l.created||new Date().toISOString().slice(0,10)};if(existing){db.leads=db.leads.map(x=>x.id===existing.id?obj:x);log('Nutzer','Lead aktualisiert',name)}else{db.leads.unshift(obj);log('Nutzer','Lead angelegt',name)}closeModal();save()})
@@ -162,7 +181,7 @@ function newTask(existing){
 function exportCSV(name,rows){let csv=rows.map(r=>r.map(v=>'"'+String(v??'').replace(/"/g,'""')+'"').join(';')).join('\r\n');let a=document.createElement('a');a.href=URL.createObjectURL(new Blob(['\ufeff'+csv],{type:'text/csv;charset=utf-8'}));a.download=name;a.click();URL.revokeObjectURL(a.href)}
 function action(a){
  if(a==='logout'){fetch('/api/logout',{method:'POST',credentials:'same-origin'}).finally(()=>location.href='/login.html')}
- else if(a==='newLead')newLead();else if(a==='newTask')newTask();else if(a==='gotoApprovals')go('approvals');else if(a==='gotoTasks')go('tasks');else if(a==='refreshAgents'){log('System','Agentenstatus geprüft','Keine echten Agentenprozesse gestartet.');save()}
+ else if(a==='newLead')newLead();else if(a==='newTask')newTask();else if(a==='aiAnalyze')aiAnalyze();else if(a==='gotoApprovals')go('approvals');else if(a==='gotoTasks')go('tasks');else if(a==='refreshAgents'){log('System','Agentenstatus geprüft','Keine echten Agentenprozesse gestartet.');save()}
  else if(a==='exportLeads')exportCSV('hermes-leads.csv',[['ID','Firma','Branche','Ort','Website','Kontakt','Status','Priorität','Potenzial','Notizen'],...db.leads.map(l=>[l.id,l.name,l.industry,l.city,l.website,l.contact,l.status,l.priority,l.need,l.notes])]);
  else if(a==='exportTasks')exportCSV('hermes-aufgaben.csv',[['ID','Aufgabe','Zuständig','Status','Fällig','Beschreibung'],...db.tasks.map(t=>[t.id,t.title,t.owner,t.status,t.due,t.desc])]);
  else if(a==='exportLogs')exportCSV('hermes-audit.csv',[['Zeit','Akteur','Aktion','Details'],...db.logs.map(l=>[l.time,l.actor,l.action,l.detail])]);
