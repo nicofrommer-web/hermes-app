@@ -1,9 +1,8 @@
 modules = ["web", "python-3.12"]
+run = "python -m pip install -r backend/requirements.txt && uvicorn backend.app:app --host 0.0.0.0 --port 8000"
 
 [nix]
 channel = "stable-25_05"
 
 [agent]
 expertMode = true
-
-run = "python -m pip install -r backend/requirements.txt && uvicorn backend.app:app --host 0.0.0.0 --port 8000"
