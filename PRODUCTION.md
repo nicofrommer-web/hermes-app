@@ -9,11 +9,13 @@
 - [x] Session-based auth + optional API token
 - [x] Audit logging
 - [x] Dockerfile
+- [x] Rate limiting dependency (`slowapi`) + example
+- [x] Backup helper script (`scripts/backup.sh`)
 
 ## Recommended next (optional)
-- [ ] Rate limiting on `/api/login` (e.g. 5 attempts / minute)
+- [ ] Rate limiting fully activated in `app.py` (see RATE_LIMIT.md)
 - [ ] Sentry for error tracking
-- [ ] Automated Postgres backups
+- [ ] Automated scheduled backups
 - [ ] Custom domain + Cloudflare in front
 - [ ] Multi-tenant support beyond single `HERMES_TENANT_ID`
 
