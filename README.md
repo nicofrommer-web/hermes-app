@@ -18,7 +18,8 @@ Antwort:
   "leads_qualified": 3,
   "tasks_open": 7,
   "approvals_pending": 2,
-  "process_uptime_seconds": 1234.5
+  "process_uptime_seconds": 1234.5,
+  "uptime": "1234s"
 }
 ```
 
