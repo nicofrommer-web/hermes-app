@@ -1,16 +1,18 @@
 #!/usr/bin/env bash
-# Simple Postgres backup helper for Fly.io
-# Usage: ./scripts/backup.sh
+# Request a Fly.io Postgres backup. This script does not schedule backups.
+# Usage: ./scripts/backup.sh [postgres-app-name]
+# Verify completion in the Fly.io dashboard after the command returns.
 
-set -euo pipefail
+set -Eeuo pipefail
 
-APP="${1:-hermes-backend}"
-STAMP=$(date +%Y%m%d-%H%M%S)
-OUT="hermes-backup-${STAMP}.sql"
+DB_APP="${1:-${HERMES_DB_APP:-hermes-db}}"
 
-echo "Creating backup via fly postgres..."
-fly postgres backup create --app hermes-db || true
-echo "Backup requested. Check Fly.io dashboard for download link."
-echo "For manual dump:"
-echo "  fly ssh console -a $APP -C 'pg_dump \$DATABASE_URL' > $OUT"
-echo "Done."
+if ! command -v fly >/dev/null 2>&1; then
+  echo "Error: Fly CLI (fly) is not installed or not on PATH." >&2
+  exit 127
+fi
+
+echo "Requesting Postgres backup for Fly app: ${DB_APP}"
+fly postgres backup create --app "${DB_APP}"
+echo "Fly CLI accepted the backup request."
+echo "Important: verify that the backup completed successfully in the Fly.io dashboard."
