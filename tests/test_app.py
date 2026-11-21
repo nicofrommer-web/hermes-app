@@ -71,3 +71,21 @@ def test_login_rejects_wrong_password():
         json={"username": "ci-admin", "password": "incorrect"},
     )
     assert response.status_code == 401
+
+
+def test_z_login_is_rate_limited_per_ip():
+    from fastapi.testclient import TestClient
+
+    limited_client = TestClient(app, client=("203.0.113.77", 12345))
+    for _ in range(5):
+        response = limited_client.post(
+            "/api/login",
+            json={"username": "ci-admin", "password": "incorrect"},
+        )
+        assert response.status_code == 401
+
+    blocked = limited_client.post(
+        "/api/login",
+        json={"username": "ci-admin", "password": "incorrect"},
+    )
+    assert blocked.status_code == 429
