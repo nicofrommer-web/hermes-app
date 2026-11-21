@@ -18,11 +18,11 @@ Antwort:
   "leads_qualified": 3,
   "tasks_open": 7,
   "approvals_pending": 2,
-  "uptime": "99.98%"
+  "process_uptime_seconds": 1234.5
 }
 ```
 
-Das Frontend im Command Center kann diesen Endpoint nutzen, um die Übersicht mit Live-Daten zu füllen.
+Das Frontend im Command Center kann diesen Endpoint nutzen, um die Übersicht mit Live-Daten zu füllen. `process_uptime_seconds` misst die Laufzeit dieses API-Prozesses seit seinem Start und ist ausdrücklich keine Verfügbarkeits- oder SLA-Messung.
 
 ## Production Deployment
 
