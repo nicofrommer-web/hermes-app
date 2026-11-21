@@ -1,4 +1,4 @@
-import os, hmac, json
+import os, hmac, json, time
 from datetime import datetime, timezone
 from typing import Generator, Optional
 
@@ -7,6 +7,9 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from starlette.middleware.sessions import SessionMiddleware
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
+from slowapi.util import get_remote_address
 from pydantic import BaseModel, Field
 from sqlalchemy import DateTime, String, Text, create_engine, select, UniqueConstraint, text as sql_text, func
 from sqlalchemy.orm import DeclarativeBase, Mapped, Session, mapped_column, sessionmaker
@@ -81,7 +84,11 @@ class WorkspaceState(Base):
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
 
 Base.metadata.create_all(bind=engine)
+APP_STARTED_AT = time.monotonic()
 app = FastAPI(title="HERMES Command Center", version="0.2.0")
+limiter = Limiter(key_func=get_remote_address)
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 app.add_middleware(SessionMiddleware, secret_key=SESSION_SECRET, session_cookie="hermes_session",
                    same_site="lax", https_only=os.getenv("HERMES_COOKIE_SECURE", "true").lower() == "true",
                    max_age=60 * 60 * 8)
@@ -167,10 +174,12 @@ def dashboard_summary(tenant: str = Depends(authenticate), db: Session = Depends
         "leads_qualified": leads_qualified,
         "tasks_open": tasks_open,
         "approvals_pending": approvals_pending,
-        "uptime": "99.98%",
+        "process_uptime_seconds": round(max(0.0, time.monotonic() - APP_STARTED_AT), 1),
+        "uptime": f"{int(max(0.0, time.monotonic() - APP_STARTED_AT))}s",
     }
 
 @app.post("/api/login")
+@limiter.limit("5/minute")
 def login(body: LoginIn, request: Request):
     if not hmac.compare_digest(body.username, ADMIN_USER) or not hmac.compare_digest(body.password, ADMIN_PASSWORD):
         raise HTTPException(status_code=401, detail="Benutzername oder Passwort falsch")
