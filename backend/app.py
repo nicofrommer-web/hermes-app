@@ -175,6 +175,7 @@ def dashboard_summary(tenant: str = Depends(authenticate), db: Session = Depends
         "tasks_open": tasks_open,
         "approvals_pending": approvals_pending,
         "process_uptime_seconds": round(max(0.0, time.monotonic() - APP_STARTED_AT), 1),
+        "uptime": f"{int(max(0.0, time.monotonic() - APP_STARTED_AT))}s",
     }
 
 @app.post("/api/login")
