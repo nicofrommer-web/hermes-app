@@ -13,9 +13,9 @@
 - [x] Backup helper script (`scripts/backup.sh`)
 
 ## Recommended next (optional)
-- [ ] Rate limiting fully activated in `app.py` (see RATE_LIMIT.md)
+- [x] Rate limiting activated on `/api/login` (5 attempts per minute per IP; covered by pytest)
 - [ ] Sentry for error tracking
-- [ ] Automated scheduled backups
+- [ ] Automated scheduled backups (the helper only requests a backup; scheduling and restore verification remain open)
 - [ ] Custom domain + Cloudflare in front
 - [ ] Multi-tenant support beyond single `HERMES_TENANT_ID`
 
